@@ -1,0 +1,156 @@
+{
+  "header": {
+    "siteName": "News Portal",
+    "logoAlt": "Site logo",
+    "menuToggle": "Open menu"
+  },
+  "nav": {
+    "home": "Home",
+    "latest": "Latest",
+    "popular": "Popular",
+    "categories": "Categories"
+  },
+  "footer": {
+    "about": "About",
+    "description": "Breaking news every day",
+    "links": "Links",
+    "aboutUs": "About Us",
+    "contact": "Contact",
+    "privacy": "Privacy",
+    "social": "Social Media",
+    "copyright": "All rights reserved"
+  },
+  "sidebar": {
+    "menu": "Menu",
+    "toggleMenu": "Open menu",
+    "closeMenu": "Close menu",
+    "home": "Home",
+    "security": "Security",
+    "privacy": "Privacy",
+    "crypto": "Cryptocurrency",
+    "technology": "Technology",
+    "search": "Search",
+    "about": "About",
+    "developedBy": "Developed by",
+    "onGithub": "on GitHub"
+  },
+  "home": {
+    "title": "Technology and Security News",
+    "subtitle": "Latest articles on cybersecurity, privacy and cryptocurrency"
+  },
+  "article": {
+    "error": {
+      "title": "Error"
+    },
+    "back": "Back",
+    "notFound": "Article not found",
+    "goBack": "Go back",
+    "loading": "Loading...",
+    "recommendations": "Recommendations",
+    "tags": "Tags",
+    "processedBy": "Processed by",
+    "viewSource": "View source",
+    "noData": "No articles found",
+    "noDataDescription": "We couldn't find any articles matching your criteria right now. Please try changing the category or language.",
+    "noRecommendations": "No recommendations yet"
+  },
+  "date": {
+    "today": "Today",
+    "yesterday": "Yesterday",
+    "thisWeek": "This Week",
+    "thisMonth": "This Month",
+    "older": "Older",
+    "publishedOn": "Published on",
+    "ago": "ago"
+  },
+  "category": {
+    "security": "Security",
+    "privacy": "Privacy",
+    "tech": "Technology",
+    "technology": "Technology",
+    "crypto": "Crypto",
+    "subtitle": "All the latest articles and news in the {category} section"
+  },
+  "search": {
+    "title": "Search",
+    "subtitle": "Use '#' to search by tags",
+    "placeholder": "Use '#' for tags. Search articles...",
+    "searchButton": "Search",
+    "clear": "Clear",
+    "searching": "Searching...",
+    "noResults": "No results found",
+    "tryDifferent": "Try a different search query or use other tags",
+    "startSearching": "Enter a query or add tags to start searching",
+    "resultsFound": "Results found",
+    "tagTip": "Tip: Start with # to add a tag",
+    "examples": "Examples",
+    "exampleText": "data security",
+    "exampleTag": "#cybersecurity"
+  },
+  "pagination": {
+    "previous": "Previous",
+    "next": "Next",
+    "page": "Page",
+    "of": "of"
+  },
+  "login": {
+    "title": "Sign In",
+    "subtitle": "Enter your credentials to continue",
+    "email_placeholder": "Email address",
+    "password_placeholder": "Password",
+    "forgot_password": "Forgot password?",
+    "submit": "Sign In",
+    "loading": "Signing in...",
+    "create_account": "Create account",
+    "privacy": "Privacy Policy"
+  },
+  "chat": {
+    "thinking": {
+      "analyzing": "Analyzing...",
+      "title": "Thought process"
+    },
+    "nodes": {
+      "start": "Starting process",
+      "classify_intent": "Classifying intent",
+      "internal_search": "Context analysis",
+      "web_search": "Web search",
+      "evaluate": "Evaluating data",
+      "reformulate": "Refining query",
+      "synthesize": "Synthesizing",
+      "fact_check": "Fact checking",
+      "finalize": "Finalizing response"
+    }
+  },
+  "register": {
+    "title": "Create an account",
+    "subtitle": "Enter your details to register",
+    "name_placeholder": "Name",
+    "email_placeholder": "Email",
+    "password_placeholder": "Password",
+    "confirm_password_placeholder": "Confirm password",
+    "submit": "Sign up",
+    "loading": "Creating account...",
+    "already_have_account": "Already have an account?",
+    "privacy": "Privacy Policy"
+  },
+  "validation": {
+    "PASS_MIN_LENGTH": "At least 8 characters",
+    "PASS_UPPERCASE": "Uppercase letter (A-Z)",
+    "PASS_LOWERCASE": "Lowercase letter (a-z)",
+    "PASS_NUMBER": "Digit (0-9)",
+    "PASS_SPECIAL_CHAR": "Special character (!#&*%...)"
+  },
+  "errors": {
+    "api": {
+      "AUTH_INVALID_CREDENTIALS": "Invalid email or password.",
+      "AUTH_ACCOUNT_NOT_FOUND": "Account not found.",
+      "AUTH_ACCOUNT_LOCKED": "Account is locked. Please contact support.",
+      "AUTH_TOO_MANY_ATTEMPTS": "Too many attempts. Try again in {minutes} min.",
+      "NETWORK_ERROR": "Network error. Please check your connection.",
+      "SERVER_ERROR": "Server is temporarily unavailable. Try again later.",
+      "UNKNOWN": "An unknown error occurred."
+    },
+    "VALIDATION_PASSWORD_INVALID": "Password must contain at least 8 characters, uppercase and lowercase Latin letters, a digit, and a special character.",
+    "VALIDATION_PASSWORDS_MISMATCH": "Passwords do not match."
+  }
+}

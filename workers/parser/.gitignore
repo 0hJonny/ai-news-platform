@@ -1,0 +1,19 @@
+CyberNews.log
+.idea
+.vscode/
+venv
+.venv/
+parsers/cybernews.ipynb
+parsers/base_parser_uc.py
+__pycache__
+**/__pycache__/
+*.py[cod]
+.pytest_cache/
+**/*.ipynb
+
+# Secrets / local env overrides
+.env
+.env*.local
+
+.DS_Store
+Thumbs.db

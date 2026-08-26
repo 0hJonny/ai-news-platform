@@ -1,0 +1,26 @@
+# Repo-wide safety net; each service directory (backend/core, backend/news,
+# frontend/src, workers/*, infra) also carries its own, more specific .gitignore.
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editors
+.idea/
+.vscode/*
+!.vscode/extensions.json
+!.vscode/launch.json
+!.vscode/tasks.json
+
+# Secrets / local env overrides — never commit a real .env, only .env.example
+.env
+.env.local
+.env.*.local
+!.env.example
+
+# Logs
+*.log
+
+# Editor swap files
+*.swp
+*.swo

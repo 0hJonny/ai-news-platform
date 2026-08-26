@@ -1,0 +1,80 @@
+# .dockerignore file template
+
+# Exclude files and directories that are specific to your local development environment
+.vscode/
+.idea/
+
+# Exclude files and directories that can be recreated or regenerated
+.air.toml
+.gitignore
+.golangci.bck.yml
+.golangci.yml
+tmp/
+
+# Exclude local git repositories
+.git/
+
+# Exclude build artifacts
+build/
+dist/
+
+# Exclude temporary files
+*.log
+*.tmp
+*.swp
+
+# Exclude OS generated files
+.DS_Store
+Thumbs.db
+
+# Exclude IDE generated files
+.idea/
+.vscode/
+
+# Exclude configuration files specific to your project
+settings.json
+config.json
+
+# Exclude compiled files
+*.class
+*.pyc
+*.exe
+*.dll
+
+# Exclude dependency directories
+node_modules/
+vendor/
+
+# Exclude editor swap files
+*.swp
+*.swo
+
+# Exclude IDE project files
+.project
+.cproject
+
+# Exclude OS specific files
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Exclude virtual environment directories
+env/
+venv/
+
+# Exclude emacs backup files
+#*~
+
+# Exclude vim backup files
+#*.swp
+
+# Exclude mac os specific files
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Exclude windows specific files
+Thumbs.db
+
+# Exclude linux specific files
+.directory

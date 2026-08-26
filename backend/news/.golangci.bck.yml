@@ -1,0 +1,35 @@
+run:
+  timeout: 5m
+
+linters:
+  enable:
+    - govet
+    - staticcheck
+    - errcheck
+    - unused
+    - ineffassign
+    - revive
+    - gofmt
+    - goimports
+    - gocyclo
+    - dupl
+
+linters-settings:
+  gocyclo:
+    min-complexity: 15
+
+  revive:
+    rules:
+      - name: var-naming
+      - name: indent-error-flow
+      - name: empty-block
+      - name: unused-parameter
+
+issues:
+  max-issues-per-linter: 0
+  max-same-issues: 0
+
+  exclude-rules:
+    - path: _test\.go
+      linters:
+        - errcheck

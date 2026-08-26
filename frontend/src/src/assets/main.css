@@ -1,0 +1,241 @@
+@import './base.css';
+
+html {
+  scrollbar-gutter: stable;
+}
+
+/* Header Part */
+.header-container {
+  @apply px-27.5 py-7.5;
+}
+
+.header-container h2 {
+  color: var(--color-text-primary);
+}
+
+.header-container-nav {
+  @apply flex justify-between items-center;
+}
+
+.header-icon {
+  width: 32px;
+  height: 32px;
+}
+
+.header-text {
+  @apply text-xl font-bold;
+}
+
+.title-header h1 {
+  color: var(--color-text-primary);
+}
+
+/* Articles Block */
+.articles-container h2 {
+  color: var(--color-text-primary);
+}
+
+.articles-container-bottom {
+  @apply grid gap-6;
+}
+
+.articles-container-top {
+  @apply grid grid-flow-row-dense grid-cols-2;
+}
+
+/* Links reference */
+.link-ref {
+  @apply hover:text-blue-500 hover:underline;
+}
+
+/* Pagination Bar */
+.pagination-button {
+  @apply relative inline-flex items-center rounded-lg p-4 text-sm font-semibold text-gray-500 hover:text-purple-700 hover:bg-violet-50 focus:z-20 focus:outline-offset-0;
+  height: 40px;
+  width: 100%;
+  transition: 0.13s ease-in-out;
+}
+
+.pagination-button.active {
+  @apply hover:text-purple-700 hover:bg-violet-50 text-slate-100;
+  background-color: #991cbe;
+}
+
+/* Article Card */
+.article-card-body {
+  @apply mb-6 rounded-2xl border p-4;
+  border-color: var(--color-palette-silver);
+  background: var(--color-bkg);
+  transition: all 0.25s ease-in-out;
+}
+
+.article-card-body:hover {
+  @apply shadow-lg -translate-y-2 border-slate-300 dark:border-purple-700 dark:shadow-purple-700;
+}
+
+.article-card-body h2 {
+  color: var(--color-text-primary);
+}
+
+.article-card-body h3 {
+  color: var(--color-text-title);
+}
+
+.article-card-body p {
+  color: var(--color-text-sub);
+}
+
+.article-card-image {
+  @apply pb-8 cursor-pointer rounded-2xl;
+  width: 100%;
+  object-fit: cover;
+}
+
+.article-card-title {
+  @apply text-2xl font-semibold cursor-pointer;
+}
+
+.article-truncate-lines-2 {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  -webkit-line-clamp: 2;
+}
+
+/* Tags cards styles */
+.tag-card-violet {
+  @apply font-medium text-sm text-violet-700 bg-violet-100 rounded-full px-3 py-1;
+  transition: background-image 0.3s ease;
+}
+
+.tag-card-violet:hover {
+  @apply shadow-md;
+  background-image: linear-gradient(to top right, #7f9cf5, #e0a3f7);
+  color: #fff;
+}
+
+.tag-card-gray {
+  @apply font-medium text-sm text-gray-700 bg-gray-100 rounded-full px-3 py-1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  transition: background-image 0.3s ease;
+}
+
+.tag-card-gray:hover {
+  @apply shadow-md;
+  background-image: linear-gradient(to top right, #cccccc, #999999);
+  color: #fff;
+}
+
+.tag-card-orange {
+  @apply font-medium text-sm text-orange-700 bg-orange-100 rounded-full px-3 py-1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  transition: background-image 0.3s ease;
+}
+
+.tag-card-orange:hover {
+  @apply shadow-md;
+  background-image: linear-gradient(to top right, #ff8c42, #ff3e03);
+  color: #fff;
+}
+
+.tag-card-green {
+  @apply font-medium text-sm text-green-700 bg-green-100 rounded-full px-3 py-1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  transition: background-image 0.3s ease;
+}
+
+.tag-card-green:hover {
+  @apply shadow-md;
+  background-image: linear-gradient(to top right, #7ed321, #3ba55c);
+  color: #fff;
+}
+
+.tag-card-pink {
+  @apply font-medium text-sm text-pink-700 bg-pink-100 rounded-full px-3 py-1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  transition: background-image 0.3s ease;
+}
+
+.tag-card-pink:hover {
+  @apply shadow-md;
+  background-image: linear-gradient(to top right, #e91e63, #d81b60);
+  color: #fff;
+}
+
+.tag-card-red {
+  @apply font-medium text-sm text-red-700 bg-red-100 rounded-full px-3 py-1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  transition: background-image 0.3s ease;
+}
+
+.tag-card-red:hover {
+  @apply shadow-md;
+  background-image: linear-gradient(to top right, #e74c3c, #c0392b);
+  color: #fff;
+}
+
+.tag-card-yellow {
+  @apply font-medium text-sm text-yellow-700 bg-yellow-100 rounded-full px-3 py-1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  transition: background-image 0.3s ease;
+}
+
+.tag-card-yellow:hover {
+  @apply shadow-md;
+  background-image: linear-gradient(to top right, #f1c40f, #f39c12);
+  color: #fff;
+}
+
+.tag-card-teal {
+  @apply font-medium text-sm text-teal-700 bg-teal-100 rounded-full px-3 py-1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  transition: background-image 0.3s ease;
+}
+
+.tag-card-teal:hover {
+  @apply shadow-md;
+  background-image: linear-gradient(to top right, #2ecc71, #27ae60);
+  color: #fff;
+}
+
+.tag-card-blue {
+  @apply font-medium text-sm text-blue-700 bg-blue-100 rounded-full px-3 py-1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  transition: background-image 0.3s ease;
+}
+
+.tag-card-blue:hover {
+  @apply shadow-md;
+  background-image: linear-gradient(to top right, #3498db, #2980b9);
+  color: #fff;
+}
+
+.tag-card-cyan {
+  @apply font-medium text-sm text-cyan-700 bg-cyan-100 rounded-full px-3 py-1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  transition: background-image 0.3s ease;
+}
+
+.tag-card-cyan:hover {
+  @apply shadow-md;
+  background-image: linear-gradient(to top right, #1abc9c, #16a085);
+  color: #fff;
+}

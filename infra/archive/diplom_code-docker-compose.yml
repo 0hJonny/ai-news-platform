@@ -1,0 +1,249 @@
+services:
+  # Init Database
+  # Postgres
+  postgres:
+    container_name: ${COMPOSE_PROJECT_NAME}-postgres
+    build:
+      context: ../postgres
+      dockerfile: Dockerfile
+      args:
+        ADMIN_USERNAME: ${ADMIN_USERNAME}
+        ADMIN_PASSWORD: ${ADMIN_PASSWORD}
+    shm_size: 1g
+    # restart: always
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      # - /opt/postgres/backup:/opt/postgres/backup
+      # - /opt/exchange:/opt/exchange
+      # - ../postgres/initdb:/docker-entrypoint-initdb.d
+    ports:
+      - ${DATASOURCE_PORT}:5432
+    environment:
+      LANG: en_US.utf8
+      POSTGRES_INITDB_ARGS: "--locale-provider=icu --icu-locale=en_US"
+      POSTGRES_PASSWORD: ${DATASOURCE_PASSWORD}
+      DATASOURCE_DB_USERS: ${DATASOURCE_DB_USERS}
+      DATASOURCE_USER: ${DATASOURCE_USER}
+      TZ: "Asia/Yekaterinburg"
+      PGTZ: "Asia/Yekaterinburg"
+    networks:
+      - db_network
+
+  # PgAdmin
+  pgadmin:
+    container_name: ${COMPOSE_PROJECT_NAME}-pgadmin
+    image: dpage/pgadmin4
+    environment:
+      PGADMIN_LISTEN_PORT: 5050
+      PGADMIN_LISTEN_ADDRESS: 0.0.0.0
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD}
+      TZ: "GMT+5"
+      PGTZ: "GMT+5"
+    ports:
+      - 5050:5050
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+    # # restart: always
+    networks:
+      - db_network
+
+  # Minio
+  minio:
+    container_name: ${COMPOSE_PROJECT_NAME}-minio
+    image: minio/minio:RELEASE.2025-04-22T22-12-26Z
+    ports:
+      - "${MINIO_API_PORT}:9000"
+      - "9001:9001"
+    environment:
+      - MINIO_ROOT_USER=${MINIO_USER}
+      - MINIO_ROOT_PASSWORD=${MINIO_PASSWORD}
+    volumes:
+      - minio_data:/data
+      # - /opt/exchange:/opt/exchange
+    command: server /data --console-address ":9001"
+    networks:
+      - app_network
+    # restart: always
+
+  # Python Server
+  # Parser
+  # python-parser:
+  #   build:
+  #     context: ../Server/Parser
+  #     dockerfile: Dockerfile
+  #   environment:
+  #     GOLANG_API: http://golang-server:5000/api/v1
+  #     API_USER_LOGIN: ${ADMIN_USERNAME}
+  #     API_USER_PASSWORD: ${ADMIN_PASSWORD}
+  #   volumes:
+  #     - ../Server/Parser:/app
+  #   # restart: always
+  #   depends_on:
+  #     - golang-server
+  #   networks:
+  #     - app_network
+
+  # annotator
+  # python-annotator:
+  #   build:
+  #     context: ../Server/Annotation
+  #     dockerfile: Dockerfile
+  #   environment:
+  #     GOLANG_API: http://golang-server:5000/api/v1
+  #     API_OLLAMA_URL: http://ollama-hub:11434
+  #     API_USER_LOGIN: ${ADMIN_USERNAME}
+  #     API_USER_PASSWORD: ${ADMIN_PASSWORD}
+  #   volumes:
+  #     - ../Server/Annotation:/app
+  #   # restart: always
+  #   depends_on:
+  #     - golang-server
+  #   networks:
+  #     - app_network
+  #     - ollama_network
+
+  # Ollama hub
+  # ollama-hub:
+  #   build:
+  #     context: ../ollama
+  #     dockerfile: Dockerfile
+  #   # runtime: nvidia
+  #   ports:
+  #     - "11434:11434"
+  #   volumes:
+  #     - ollama_data:/root/.ollama
+  #   # restart: always
+  #   depends_on:
+  #     - golang-server
+  #     - python-annotator
+  #   networks:
+  #     - ollama_network
+
+  # Go Server
+  golang-server:
+    container_name: ${COMPOSE_PROJECT_NAME}-golang-server
+    build:
+      context: ../Server/Backend
+      dockerfile: Dockerfile
+    environment:
+      POSTGRES_DATABASE_URL: postgres
+      POSTGRES_USERNAME: ${DATASOURCE_USER}
+      POSTGRES_PASSWORD: ${DATASOURCE_PASSWORD}
+      POSTGRES_ARTICLES: ${DATASOURCE_DB_ARTICLES}
+      POSTGRES_USERS: ${DATASOURCE_DB_USERS}
+      POSTGRES_PORT: "5432"
+      MINIO_USER: ${MINIO_USER}
+      MINIO_PASSWORD: ${MINIO_PASSWORD}
+      MINIO_HOST: minio
+      MINIO_PORT: ${MINIO_API_PORT}
+    ports:
+      - "5001:5000"
+    volumes:
+      - ../Server/Backend:/app/data
+    # restart: always
+    depends_on:
+      - postgres
+      - minio
+    networks:
+      - db_network
+      - app_network
+
+  vue-new-app:
+    container_name: ${COMPOSE_PROJECT_NAME}-vue-app
+    environment:
+      GOLANG_API: golang-server:5000
+    build:
+      context: ../src
+      dockerfile: Dockerfile
+    ports:
+      - "3001:3001"
+    volumes:
+      - ../src:/app
+      # - /app/node_modules
+    # restart: always
+    depends_on:
+      - golang-server
+    networks:
+      - app_network
+
+  # Init Web
+  vue-app:
+    container_name: ${COMPOSE_PROJECT_NAME}-vue-app-old
+    environment:
+      GOLANG_API: golang-server:5000
+    build:
+      context: ../Web-site
+      dockerfile: Dockerfile
+    ports:
+      - "3002:3001"
+    volumes:
+      - ../Web-site:/app
+      # - /app/node_modules
+    # restart: always
+    depends_on:
+      - golang-server
+    networks:
+      - app_network
+  # vue-app:
+  #   build:
+  #     context: .
+  #     dockerfile: Dockerfile
+  #   ports:
+  #     - "80:80"
+  #   volumes:
+  #     - .:/app
+  #   # restart: always
+
+  # dev container
+  # scraper_server:
+  #   build:
+  #     context: ../Server/Scraper/Service
+  #     dockerfile: Dockerfile
+  #   ports:
+  #     - "5002:5000"
+  #   volumes:
+  #     - ../Server/Scraper/Service:/app
+  #   # restart: always
+  #   depends_on:
+  #     - golang-server
+  #   networks:
+  #     - app_network
+  # worker:
+  #   environment:
+  #     SCRAPER_API: http://scraper_server:5000
+  #   build:
+  #     context: ../Server/Scraper/Worker
+  #     dockerfile: Dockerfile
+  #   ports:
+  #     - "5003:5000"
+  #   volumes:
+  #     - ../Server/Scraper/Worker:/app
+  #   # restart: always
+  #   depends_on:
+  #     - golang-server
+  #   networks:
+  #     - app_network
+
+# Volumes
+volumes:
+  ollama_data:
+    name: ${COMPOSE_PROJECT_NAME}-ollama_data
+  postgres_data:
+    name: ${COMPOSE_PROJECT_NAME}-postgres_data
+  pgadmin_data:
+    name: ${COMPOSE_PROJECT_NAME}-pgadmin_data
+  minio_data:
+    name: ${COMPOSE_PROJECT_NAME}-minio_data
+
+# Networks
+networks:
+  db_network:
+    name: ${COMPOSE_PROJECT_NAME}-db_network
+    driver: bridge
+  ollama_network:
+    name: ${COMPOSE_PROJECT_NAME}-ollama_network
+    driver: bridge
+  app_network:
+    name: ${COMPOSE_PROJECT_NAME}-app_network
+    driver: bridge

@@ -1,0 +1,15 @@
+export const ERROR_CODES = {
+  INVALID_CREDENTIALS: 'AUTH_INVALID_CREDENTIALS',
+  ACCOUNT_NOT_FOUND: 'AUTH_ACCOUNT_NOT_FOUND',
+  ACCOUNT_LOCKED: 'AUTH_ACCOUNT_LOCKED',
+  TOO_MANY_ATTEMPTS: 'AUTH_TOO_MANY_ATTEMPTS',
+  NETWORK_ERROR: 'NETWORK_ERROR',
+  SERVER_ERROR: 'SERVER_ERROR',
+  UNKNOWN: 'UNKNOWN',
+} as const
+
+export type ErrorCode = (typeof ERROR_CODES)[keyof typeof ERROR_CODES]
+
+export function isErrorCode(code: string): code is ErrorCode {
+  return (Object.values(ERROR_CODES) as string[]).includes(code)
+}

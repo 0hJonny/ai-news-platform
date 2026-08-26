@@ -1,0 +1,42 @@
+# Ignore .vscode and .idea folders
+.vscode/
+.idea/
+
+# Ignore tmp folder
+tmp/
+bin/
+
+# Ignore log files
+*.log
+
+# Ignore editor backup files
+*.swp
+*.swo
+
+# Ignore local dependencies
+/node_modules/
+/vendor/
+
+# Ignore build artifacts
+/build/
+/dist/
+*.exe
+*.exe~
+*.test
+*.out
+
+# Ignore cache and temp files
+/tmp/
+/temp/
+
+# Ignore secrets / local env overrides
+.env
+.env*.local
+
+# Ignore Go workspace files
+go.work
+go.work.sum
+
+.DS_Store
+Thumbs.db
+

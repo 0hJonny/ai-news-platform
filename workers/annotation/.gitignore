@@ -1,0 +1,21 @@
+.idea
+.vscode/
+__pycache__
+**/__pycache__/
+*.py[cod]
+.pytest_cache/
+extensions
+logs/
+**/*.log/
+*.log
+
+# Virtual environments
+.venv/
+venv/
+
+# Secrets / local env overrides
+.env
+.env*.local
+
+.DS_Store
+Thumbs.db

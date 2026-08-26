@@ -1,0 +1,2 @@
+# Run the Python program every 12 hours
+0 */12 * * * python /app/main.py

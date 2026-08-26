@@ -1,0 +1,82 @@
+version: "2"
+
+# Run settings
+run:
+  timeout: 5m                  # Timeout
+  issues-exit-code: 1          # Exit code when issues are found
+  go: "1.26"                   # Your project's Go version
+
+# Output settings
+output:
+  text:
+    format: colored-line-number
+    print-issued-lines: true
+    print-linter-name: true
+
+# Code formatter settings (separate section in v2)
+formatters:
+  enable:
+    - goimports
+  settings:
+    goimports:
+      local-prefixes: github.com/0hJonny/langfuse-agents
+
+# Single block controlling linters and their settings
+linters:
+  default: none                # Disable the default linters
+  enable:
+    # Core and mandatory
+    - errcheck                 # Finds ignored errors
+    - govet                    # Official Go analyzer
+    - ineffassign              # Finds unused assignments
+    - staticcheck               # Combined powerful analyzer
+    - unused                   # Finds unused code
+
+    # Code quality and style
+    - gocritic                 # Best practices, performance and style
+    - revive                   # Replacement for the deprecated golint
+    - misspell                 # Finds typos in English words
+    - errorlint                # Checks correct error wrapping (%w)
+
+    # Security and performance
+    - gosec                    # Vulnerability analyzer
+    - prealloc                 # Suggests slice pre-allocation
+
+  # Per-linter settings now live directly here
+  settings:
+    gocritic:
+      enabled-tags:
+        - diagnostic
+        - experimental
+        - opinionated
+        - performance
+        - style
+
+    revive:
+      rules:
+        - name: exported
+          severity: warning
+          disabled: true
+        - name: blank-imports
+          severity: warning
+
+    errcheck:
+      check-type-assertions: true # Check type assertions
+      check-blank: false           # Check constructs like `_ = func()`
+
+    govet:
+      enable:
+        - fieldalignment
+
+# Exclusions (what not to check)
+issues:
+  exclude-rules:
+    # Skip the revive linter for tests
+    - path: _test\.go
+      linters:
+        - revive
+    # Skip gosec warnings about weak randomizers in tests
+    - path: _test\.go
+      text: "G404:"
+      linters:
+        - gosec

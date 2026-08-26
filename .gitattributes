@@ -1,0 +1,26 @@
+# Normalize line endings to LF for everything git considers text,
+# regardless of what the contributor's editor/OS used on checkout.
+* text=auto eol=lf
+
+# --- Binary assets: never touch, never diff as text ---
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.webp binary
+*.woff binary
+*.woff2 binary
+*.ttf binary
+*.eot binary
+*.pdf binary
+
+# --- Generated code: excluded from GitHub diffs/PR review and language stats ---
+# Protobuf-generated Go (backend/core/pkg/authclient/pb, api/proto output)
+*.pb.go linguist-generated=true
+*.pb.gw.go linguist-generated=true
+# sqlc-generated Go (backend/core/internal/*/storage/postgres)
+**/storage/postgres/*.go linguist-generated=true
+# Lockfiles
+go.sum linguist-generated=true
+package-lock.json linguist-generated=true

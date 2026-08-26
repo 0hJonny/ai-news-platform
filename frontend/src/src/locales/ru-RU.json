@@ -1,0 +1,174 @@
+{
+  "header": {
+    "siteName": "Новостной портал",
+    "logoAlt": "Логотип сайта",
+    "menuToggle": "Открыть меню"
+  },
+  "nav": {
+    "home": "Главная",
+    "latest": "Последние",
+    "popular": "Популярное",
+    "categories": "Категории"
+  },
+  "footer": {
+    "about": "О нас",
+    "description": "Актуальные новости каждый день",
+    "links": "Ссылки",
+    "aboutUs": "О нас",
+    "contact": "Контакты",
+    "privacy": "Конфиденциальность",
+    "social": "Соцсети",
+    "copyright": "Все права защищены"
+  },
+  "sidebar": {
+    "menu": "Меню",
+    "toggleMenu": "Открыть меню",
+    "closeMenu": "Закрыть меню",
+    "home": "Главная",
+    "security": "Безопасность",
+    "privacy": "Приватность",
+    "crypto": "Криптовалюты",
+    "technology": "Технологии",
+    "search": "Поиск",
+    "about": "О нас",
+    "developedBy": "Разработано",
+    "onGithub": "на GitHub"
+  },
+  "home": {
+    "title": "Новости технологий и безопасности",
+    "subtitle": "Актуальные статьи о кибербезопасности, приватности и криптовалютах"
+  },
+  "article": {
+    "error": {
+      "title": "Ошибка"
+    },
+    "back": "Назад",
+    "notFound": "Статья не найдена",
+    "goBack": "Вернуться назад",
+    "loading": "Загрузка...",
+    "recommendations": "Рекомендации",
+    "tags": "Теги",
+    "processedBy": "Обработано",
+    "viewSource": "Перейти к источнику",
+    "noData": "Статьи не найдены",
+    "noDataDescription": "По заданным критериям пока нет статей. Попробуй выбрать другую категорию или переключить язык.",
+    "noRecommendations": "Пока нет рекомендаций"
+  },
+  "date": {
+    "today": "Сегодня",
+    "yesterday": "Вчера",
+    "thisWeek": "На этой неделе",
+    "thisMonth": "В этом месяце",
+    "older": "Старые",
+    "publishedOn": "Опубликовано",
+    "ago": "назад"
+  },
+  "category": {
+    "security": "Безопасность",
+    "privacy": "Приватность",
+    "tech": "Технологии",
+    "technology": "Технологии",
+    "crypto": "Криптовалюты",
+    "subtitle": "Все последние статьи и новости в разделе «{category}»"
+  },
+  "search": {
+    "title": "Поиск",
+    "subtitle": "Используйте '#' для поиска по тегам",
+    "placeholder": "Используйте '#' для тегов. Поиск статей...",
+    "searchButton": "Найти",
+    "clear": "Очистить",
+    "searching": "Поиск...",
+    "noResults": "Ничего не найдено",
+    "tryDifferent": "Попробуйте изменить запрос или использовать другие теги",
+    "startSearching": "Введите запрос или добавьте теги для начала поиска",
+    "resultsFound": "Найдено результатов",
+    "tagTip": "Совет: Начните с # для добавления тега",
+    "examples": "Примеры",
+    "exampleText": "безопасность данных",
+    "exampleTag": "#cybersecurity"
+  },
+  "pagination": {
+    "previous": "Назад",
+    "next": "Вперёд",
+    "page": "Страница",
+    "of": "из"
+  },
+  "chat": {
+    "thinking": {
+      "analyzing": "Анализирую...",
+      "title": "Ход мыслей"
+    },
+    "nodes": {
+      "start": "Запуск процесса",
+      "classify_intent": "Определение намерения",
+      "internal_search": "Анализ контекста",
+      "web_search": "Поиск информации",
+      "evaluate": "Оценка данных",
+      "reformulate": "Уточнение",
+      "synthesize": "Синтез",
+      "fact_check": "Проверка фактов",
+      "finalize": "Формирование ответа"
+    }
+  },
+  "login": {
+    "title": "Вход в аккаунт",
+    "subtitle": "Введите свои данные для продолжения",
+    "email_placeholder": "Электронная почта",
+    "password_placeholder": "Пароль",
+    "forgot_password": "Забыли пароль?",
+    "submit": "Войти",
+    "loading": "Вход...",
+    "create_account": "Создать аккаунт",
+    "privacy": "Политика конфиденциальности"
+  },
+  "register": {
+    "title": "Создать аккаунт",
+    "subtitle": "Заполните данные для регистрации",
+    "name_placeholder": "Имя",
+    "email_placeholder": "Email",
+    "password_placeholder": "Пароль",
+    "confirm_password_placeholder": "Подтвердите пароль",
+    "submit": "Зарегистрироваться",
+    "loading": "Создание аккаунта...",
+    "already_have_account": "Уже есть аккаунт?",
+    "privacy": "Политика конфиденциальности"
+  },
+  "validation": {
+    "PASS_MIN_LENGTH": "Минимум 8 символов",
+    "PASS_UPPERCASE": "Заглавная буква (A-Z)",
+    "PASS_LOWERCASE": "Строчная буква (a-z)",
+    "PASS_NUMBER": "Цифра (0-9)",
+    "PASS_SPECIAL_CHAR": "Спецсимвол (!#&*%...)"
+  },
+  "errors": {
+    "api": {
+      "AUTH_INVALID_CREDENTIALS": "Неверный email или пароль.",
+      "AUTH_ACCOUNT_NOT_FOUND": "Аккаунт не найден.",
+      "AUTH_ACCOUNT_LOCKED": "Аккаунт заблокирован. Обратитесь в поддержку.",
+      "AUTH_TOO_MANY_ATTEMPTS": "Слишком много попыток. Попробуйте через {minutes} мин.",
+      "NETWORK_ERROR": "Ошибка сети. Проверьте подключение к интернету.",
+      "SERVER_ERROR": "Сервер временно недоступен. Попробуйте позже.",
+      "UNKNOWN": "Произошла неизвестная ошибка."
+    },
+    "VALIDATION_PASSWORD_INVALID": "Пароль должен содержать минимум 8 символов, заглавную и строчную латинские буквы, цифру и спецсимвол.",
+    "VALIDATION_PASSWORDS_MISMATCH": "Пароли не совпадают."
+  },
+  "steps": {
+    "init": "Инициализация...",
+    "classifying_intent": "Определяем тип вашего вопроса...",
+    "intent_chitchat": "Формируем быстрый ответ...",
+    "intent_rag": "Начинаем поиск фактов...",
+    "local_search": "Ищем в базе знаний...",
+    "local_found": "Нашли данные в локальной базе.",
+    "local_not_found": "В локальной базе пусто.",
+    "evaluating_context": "Оцениваем собранную информацию...",
+    "reformulating_query": "Уточняем поисковый запрос...",
+    "web_search": "Ищем информацию в интернете...",
+    "web_found": "Нашли источники в сети.",
+    "web_not_found": "Поиск в интернете не дал результатов.",
+    "synthesizing_draft": "Пишем черновик ответа...",
+    "fact_checking": "Проверяем факты...",
+    "finalizing_response": "Ответ готов.",
+    "error": "Произошла ошибка при обработке."
+  }
+}

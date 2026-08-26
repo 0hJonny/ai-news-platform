@@ -1,0 +1,299 @@
+name: ai_news_platform
+
+networks:
+  platform-network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+  chroma_data:
+  minio_data:
+  pgadmin_data:
+
+services:
+  # =========================================================================
+  # Infrastructure
+  # =========================================================================
+  postgres:
+    build:
+      context: ./postgres
+    container_name: platform-postgres
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    ports:
+      - "55432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - platform-network
+
+  chromadb:
+    image: chromadb/chroma:latest
+    container_name: platform-chromadb
+    environment:
+      - IS_PERSISTENT=TRUE
+      - ANONYMIZED_TELEMETRY=FALSE
+    ports:
+      - "8001:8000"
+    volumes:
+      - chroma_data:/chroma/chroma
+    networks:
+      - platform-network
+
+  minio:
+    image: minio/minio:RELEASE.2025-04-22T22-12-26Z
+    container_name: platform-minio
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_USER}
+      MINIO_ROOT_PASSWORD: ${MINIO_PASSWORD}
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio_data:/data
+    networks:
+      - platform-network
+
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: platform-pgadmin
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD}
+    ports:
+      - "5050:80"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+    networks:
+      - platform-network
+
+  # Runs the goose migrations once for the auth, chats, news, profiles schemas
+  # (in that exact order — chats.sessions references auth.users, profiles.*
+  # references auth.users and news.articles) on top of the single ${POSTGRES_DB},
+  # then exits 0. Application services wait for it to complete successfully (see migrate/migrate.sh).
+  migrate:
+    build:
+      context: ./migrate
+    container_name: platform-migrate
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      PGHOST: postgres
+      PGPORT: "5432"
+      PGUSER: ${POSTGRES_USER}
+      PGPASSWORD: ${POSTGRES_PASSWORD}
+      PGDATABASE: ${POSTGRES_DB}
+    volumes:
+      - ../backend/core/sql:/sql/core:ro
+      - ../backend/news/sql:/sql/news:ro
+    networks:
+      - platform-network
+
+  # =========================================================================
+  # backend/core (news_agent) — auth, chats, gateway. Shared go.mod, left untouched.
+  # =========================================================================
+  auth:
+    build:
+      context: ../backend/core
+      dockerfile: dockerfile.dev
+    container_name: platform-auth
+    working_dir: /app
+    volumes:
+      - ../backend/core:/app
+    command: ["go", "run", "./cmd/auth"]
+    environment:
+      DATABASE_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}?sslmode=disable
+      JWT_SECRET: ${JWT_SECRET}
+      PORT: "8081"
+      GRPC_PORT: "50051"
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    networks:
+      - platform-network
+
+  chats:
+    build:
+      context: ../backend/core
+      dockerfile: dockerfile.dev
+    container_name: platform-chats
+    working_dir: /app
+    volumes:
+      - ../backend/core:/app
+    command: ["go", "run", "./cmd/chats"]
+    environment:
+      DATABASE_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}?sslmode=disable
+      PORT: "8082"
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    networks:
+      - platform-network
+
+  gateway:
+    build:
+      context: ../backend/core
+      dockerfile: dockerfile.dev
+    container_name: platform-gateway
+    working_dir: /app
+    volumes:
+      - ../backend/core:/app
+    command: ["go", "run", "./cmd/gateway"]
+    environment:
+      PORT: "8080"
+      AUTH_GRPC_ADDR: "auth:50051"
+      AUTH_HTTP_ADDR: "http://auth:8081"
+      AGENTS_HTTP_ADDR: "http://agent:8000"
+      CHATS_HTTP_ADDR: "http://chats:8082"
+      NEWS_HTTP_ADDR: "http://news:5000"
+      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS}
+    ports:
+      - "8080:8080"
+    depends_on:
+      - auth
+      - chats
+      - agent
+      - news
+    networks:
+      - platform-network
+
+  # =========================================================================
+  # backend/news (Diplom_Code) — standalone Gin/GORM service, its own go.mod.
+  # Single connection to ${POSTGRES_DB}, GORM looks up tables via
+  # search_path=news,profiles,public (see src/models/db.go).
+  # =========================================================================
+  news:
+    build:
+      context: ../backend/news
+    container_name: platform-news
+    working_dir: /app/data
+    volumes:
+      - ../backend/news:/app/data
+    command: ["go", "run", "app.go"]
+    environment:
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: "5432"
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+      MINIO_USER: ${MINIO_USER}
+      MINIO_PASSWORD: ${MINIO_PASSWORD}
+      MINIO_HOST: minio
+      MINIO_PORT: "9000"
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      minio:
+        condition: service_started
+    networks:
+      - platform-network
+
+  # =========================================================================
+  # workers/agent — LangGraph FastAPI agent (news_agent/app)
+  # =========================================================================
+  agent:
+    build:
+      context: ../workers/agent
+      dockerfile: dockerfile
+    container_name: platform-agent
+    volumes:
+      - ../workers/agent:/app
+    environment:
+      LLM_PROVIDER: ${LLM_PROVIDER}
+      OLLAMA_BASE_URL: ${OLLAMA_BASE_URL}
+      OLLAMA_MODEL: ${OLLAMA_MODEL}
+      LMSTUDIO_BASE_URL: ${LMSTUDIO_BASE_URL}
+      LMSTUDIO_MODEL: ${LMSTUDIO_MODEL}
+      LLM_TEMPERATURE: ${LLM_TEMPERATURE}
+      EMBEDDING_MODEL: ${EMBEDDING_MODEL}
+      CHROMA_HOST: chromadb
+      CHROMA_PORT: "8000"
+      CHROMA_COLLECTION: ${CHROMA_COLLECTION}
+      POSTGRES_URI: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+      LANGFUSE_PUBLIC_KEY: ${LANGFUSE_PUBLIC_KEY}
+      LANGFUSE_SECRET_KEY: ${LANGFUSE_SECRET_KEY}
+      LANGFUSE_HOST: ${LANGFUSE_HOST}
+      CORS_ORIGINS: ${ALLOWED_ORIGINS}
+      GO_CHAT_SERVICE: "http://chats:8082/api/v1"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      chromadb:
+        condition: service_started
+    networks:
+      - platform-network
+
+  # =========================================================================
+  # workers/parser, workers/annotation — background jobs (Diplom_Code).
+  # profiles: [jobs] => do NOT start on plain `docker compose up`, only explicitly:
+  #   docker compose --profile jobs up parser
+  #   docker compose --profile jobs up annotation
+  # Stage 4: moving to a task queue pattern (broker + consumers) — for now it's
+  # the same multiprocessing script / pull worker as before.
+  # =========================================================================
+  parser:
+    profiles: ["jobs"]
+    build:
+      context: ../workers/parser
+    container_name: platform-parser
+    volumes:
+      - ../workers/parser:/app
+    environment:
+      GOLANG_API: "http://news:5000/api/v1"
+      API_USER_LOGIN: ${ADMIN_USERNAME}
+      API_USER_PASSWORD: ${ADMIN_PASSWORD}
+    depends_on:
+      - news
+    networks:
+      - platform-network
+
+  annotation:
+    profiles: ["jobs"]
+    build:
+      context: ../workers/annotation
+    container_name: platform-annotation
+    volumes:
+      - ../workers/annotation:/app
+    environment:
+      GOLANG_API: "http://news:5000/api/v1"
+      API_USER_LOGIN: ${ADMIN_USERNAME}
+      API_USER_PASSWORD: ${ADMIN_PASSWORD}
+      API_OLLAMA_URL: ${OLLAMA_BASE_URL}
+    depends_on:
+      - news
+    networks:
+      - platform-network
+
+  # =========================================================================
+  # frontend (Diplom_Code/src)
+  # http.ts now points at API_BASE_URL from src/api/endpoints.ts (the Gateway,
+  # localhost:8080) instead of the old hardcoded backend URL.
+  # =========================================================================
+  frontend:
+    build:
+      context: ../frontend/src
+    container_name: platform-frontend
+    working_dir: /app
+    volumes:
+      - ../frontend/src:/app
+    command: ["sh", "-c", "npm install && npm run dev -- --host --port 3001"]
+    environment:
+      VITE_IMAGE_BASE_URL: "http://localhost:9000"
+    ports:
+      - "3001:3001"
+    depends_on:
+      - gateway
+    networks:
+      - platform-network
