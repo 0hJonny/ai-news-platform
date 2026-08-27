@@ -84,6 +84,7 @@ CREATE TABLE news.audit_log (
     changed_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
+-- +goose StatementBegin
 CREATE OR REPLACE FUNCTION news.log_change() RETURNS TRIGGER AS $$
 BEGIN
     IF TG_OP = 'INSERT' THEN
@@ -101,6 +102,7 @@ BEGIN
     END IF;
 END;
 $$ LANGUAGE plpgsql;
+-- +goose StatementEnd
 
 CREATE TRIGGER articles_audit AFTER INSERT OR UPDATE OR DELETE ON news.articles
     FOR EACH ROW EXECUTE FUNCTION news.log_change();
