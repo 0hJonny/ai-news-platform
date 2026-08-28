@@ -1,13 +1,13 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { createAuthRepository } from '@/services/auth'
-import type { AuthRequest } from '@/types/auth/auth'
+import type { AuthRequest, UserProfile } from '@/types/auth/auth'
 
 export const useAuthStore = defineStore('auth', () => {
   const repo = createAuthRepository()
 
   const token = ref<string | null>(localStorage.getItem('token'))
-  const user = ref<undefined | null>(null)
+  const user = ref<UserProfile | null>(null)
 
   // Whether the current/last identity was a guest (anonymous login) rather
   // than a real registered account. Unlike token, this survives
@@ -23,7 +23,8 @@ export const useAuthStore = defineStore('auth', () => {
   // Recoverable: token expired normally. Modal offers login/register/guest.
   const sessionExpired = ref(false)
   // Fatal: token was never legitimately issued (bad signature, hand-edited,
-  // etc). Modal blocks the UI with a single "start over" action.
+  // etc). Modal offers re-login for a real account, or starting over as a
+  // guest if the session was already anonymous (see isGuest).
   const invalidSession = ref(false)
 
   const isAuthenticated = computed(() => !!token.value)
@@ -42,7 +43,6 @@ export const useAuthStore = defineStore('auth', () => {
     // "no longer trust the old token" states has been resolved.
     sessionExpired.value = false
     invalidSession.value = false
-    // For future use: await getUserProfile()
     return true
   }
 
@@ -139,6 +139,19 @@ export const useAuthStore = defineStore('auth', () => {
     sessionExpired.value = false
   }
 
+  // Loads the current user's profile (email/name/role). Safe to call
+  // whenever a token exists; failures are logged but don't affect auth
+  // state itself — the sidebar just keeps showing its fallback nickname.
+  const fetchProfile = async () => {
+    if (!token.value) return
+    const result = await repo.getProfile()
+    if (result.success) {
+      user.value = result.data
+    } else {
+      console.error('[AuthStore] Не удалось загрузить профиль:', result.error.message)
+    }
+  }
+
   return {
     token,
     user,
@@ -157,6 +170,7 @@ export const useAuthStore = defineStore('auth', () => {
     notifyInvalidSession,
     dismissSessionExpired,
     clearErrors,
+    fetchProfile,
     $reset,
   }
 })

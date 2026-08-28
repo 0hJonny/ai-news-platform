@@ -21,8 +21,8 @@ func NewHandler(svc service.AuthService, log *slog.Logger) *Handler {
 	}
 }
 
-func (h *Handler) respondWithError(w http.ResponseWriter, code int, message string) {
-	h.respondWithJSON(w, code, ErrorResponse{Error: message})
+func (h *Handler) respondWithError(w http.ResponseWriter, statusCode int, errCode, message string) {
+	h.respondWithJSON(w, statusCode, ErrorResponse{Error: ErrorBody{Code: errCode, Message: message}})
 }
 
 func (h *Handler) respondWithJSON(w http.ResponseWriter, code int, payload any) {
@@ -33,7 +33,12 @@ func (h *Handler) respondWithJSON(w http.ResponseWriter, code int, payload any) 
 	}
 }
 
-func (h *Handler) extractAnonUserID(r *http.Request) string {
+// extractUserIDFromToken reads and validates the Authorization header,
+// returning the subject of a valid token or "" if there isn't one. Used two
+// ways: as an optional lookup during registration (upgrade an anonymous
+// session instead of creating a fresh account) and as a mandatory one for
+// the profile endpoint (caller checks for "" and rejects the request).
+func (h *Handler) extractUserIDFromToken(r *http.Request) string {
 	authHeader := r.Header.Get("Authorization")
 	if authHeader == "" {
 		return ""

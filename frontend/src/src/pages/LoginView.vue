@@ -30,7 +30,7 @@ const handleSubmit = async () => {
   })
 
   if (success) {
-    router.push({ name: 'home' })
+    router.push({ name: 'Home' })
   }
 }
 </script>

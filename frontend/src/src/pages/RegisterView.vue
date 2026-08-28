@@ -61,7 +61,7 @@ const handleSubmit = async () => {
     password: password.value,
   })
 
-  if (success) router.push({ name: 'login' })
+  if (success) router.push({ name: 'Login' })
 }
 </script>
 

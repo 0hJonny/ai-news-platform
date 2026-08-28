@@ -1,6 +1,6 @@
 import type { AxiosInstance } from 'axios'
 import type { IAuthRepository } from './IAuthRepository'
-import type { AuthRequest, AuthResult, TokenResponse } from '@/types/auth/auth'
+import type { AuthRequest, AuthResult, ProfileResult, TokenResponse, UserProfile } from '@/types/auth/auth'
 import { getErrorCode } from '@/utils/errorMapper'
 import { ENDPOINTS } from '@/api/endpoints'
 
@@ -26,6 +26,19 @@ export class ApiAuthRepository implements IAuthRepository {
 
   async anonymousLogin(): Promise<AuthResult> {
     return this._execute(ENDPOINTS.ANONIMOUS)
+  }
+
+  async getProfile(): Promise<ProfileResult> {
+    try {
+      const { data } = await this.http.get<UserProfile>(ENDPOINTS.USERDATA)
+      return { success: true, data }
+    } catch (e: unknown) {
+      const { code, details } = getErrorCode(e)
+      return {
+        success: false,
+        error: { code: code || 'AUTH_HTTP_ERROR', message: 'Ошибка получения профиля', details: details || undefined },
+      }
+    }
   }
 
   private async _execute(endpoint: string, payload?: unknown): Promise<AuthResult> {

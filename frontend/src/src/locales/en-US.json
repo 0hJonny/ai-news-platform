@@ -161,6 +161,8 @@
       "AUTH_ACCOUNT_NOT_FOUND": "Account not found.",
       "AUTH_ACCOUNT_LOCKED": "Account is locked. Please contact support.",
       "AUTH_TOO_MANY_ATTEMPTS": "Too many attempts. Try again in {minutes} min.",
+      "AUTH_EMAIL_TAKEN": "This email is already registered.",
+      "AUTH_INVALID_EMAIL": "Invalid email format.",
       "NETWORK_ERROR": "Network error. Please check your connection.",
       "SERVER_ERROR": "Server is temporarily unavailable. Try again later.",
       "UNKNOWN": "An unknown error occurred."

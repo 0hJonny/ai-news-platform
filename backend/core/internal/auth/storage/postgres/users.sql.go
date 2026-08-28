@@ -13,19 +13,20 @@ import (
 )
 
 const createUser = `-- name: CreateUser :one
-INSERT INTO auth.users (email, password_hash, role) 
-VALUES ($1, $2, $3) 
-RETURNING id, email, password_hash, role, created_at, updated_at
+INSERT INTO auth.users (email, password_hash, role, name)
+VALUES ($1, $2, $3, $4)
+RETURNING id, email, password_hash, role, created_at, updated_at, name
 `
 
 type CreateUserParams struct {
 	Email        *string         `json:"email"`
 	PasswordHash *string         `json:"password_hash"`
 	Role         domain.UserRole `json:"role"`
+	Name         *string         `json:"name"`
 }
 
 func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (AuthUsers, error) {
-	row := q.db.QueryRow(ctx, createUser, arg.Email, arg.PasswordHash, arg.Role)
+	row := q.db.QueryRow(ctx, createUser, arg.Email, arg.PasswordHash, arg.Role, arg.Name)
 	var i AuthUsers
 	err := row.Scan(
 		&i.ID,
@@ -34,6 +35,7 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (AuthUse
 		&i.Role,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.Name,
 	)
 	return i, err
 }
@@ -43,9 +45,10 @@ SELECT a.id,
        a.email,
        a.password_hash,
        a.created_at,
-       a.role 
+       a.role,
+       a.name
   FROM auth.users a
-WHERE a.email = $1 
+WHERE a.email = $1
 LIMIT 1
 `
 
@@ -55,6 +58,7 @@ type GetUserByEmailRow struct {
 	PasswordHash *string            `json:"password_hash"`
 	CreatedAt    pgtype.Timestamptz `json:"created_at"`
 	Role         domain.UserRole    `json:"role"`
+	Name         *string            `json:"name"`
 }
 
 func (q *Queries) GetUserByEmail(ctx context.Context, email *string) (GetUserByEmailRow, error) {
@@ -66,6 +70,42 @@ func (q *Queries) GetUserByEmail(ctx context.Context, email *string) (GetUserByE
 		&i.PasswordHash,
 		&i.CreatedAt,
 		&i.Role,
+		&i.Name,
+	)
+	return i, err
+}
+
+const getUserById = `-- name: GetUserById :one
+SELECT a.id,
+       a.email,
+       a.password_hash,
+       a.created_at,
+       a.role,
+       a.name
+  FROM auth.users a
+WHERE a.id = $1
+LIMIT 1
+`
+
+type GetUserByIdRow struct {
+	ID           pgtype.UUID        `json:"id"`
+	Email        *string            `json:"email"`
+	PasswordHash *string            `json:"password_hash"`
+	CreatedAt    pgtype.Timestamptz `json:"created_at"`
+	Role         domain.UserRole    `json:"role"`
+	Name         *string            `json:"name"`
+}
+
+func (q *Queries) GetUserById(ctx context.Context, id pgtype.UUID) (GetUserByIdRow, error) {
+	row := q.db.QueryRow(ctx, getUserById, id)
+	var i GetUserByIdRow
+	err := row.Scan(
+		&i.ID,
+		&i.Email,
+		&i.PasswordHash,
+		&i.CreatedAt,
+		&i.Role,
+		&i.Name,
 	)
 	return i, err
 }
@@ -74,20 +114,22 @@ const updateUserToRegistered = `-- name: UpdateUserToRegistered :one
 UPDATE auth.users
    SET email = $1,
        password_hash = $2,
+       name = $3,
        role = 'user',
        updated_at = CURRENT_TIMESTAMP
- WHERE id = $3
-RETURNING id, email, password_hash, role, created_at, updated_at
+ WHERE id = $4
+RETURNING id, email, password_hash, role, created_at, updated_at, name
 `
 
 type UpdateUserToRegisteredParams struct {
 	Email        *string     `json:"email"`
 	PasswordHash *string     `json:"password_hash"`
+	Name         *string     `json:"name"`
 	ID           pgtype.UUID `json:"id"`
 }
 
 func (q *Queries) UpdateUserToRegistered(ctx context.Context, arg UpdateUserToRegisteredParams) (AuthUsers, error) {
-	row := q.db.QueryRow(ctx, updateUserToRegistered, arg.Email, arg.PasswordHash, arg.ID)
+	row := q.db.QueryRow(ctx, updateUserToRegistered, arg.Email, arg.PasswordHash, arg.Name, arg.ID)
 	var i AuthUsers
 	err := row.Scan(
 		&i.ID,
@@ -96,6 +138,7 @@ func (q *Queries) UpdateUserToRegistered(ctx context.Context, arg UpdateUserToRe
 		&i.Role,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.Name,
 	)
 	return i, err
 }

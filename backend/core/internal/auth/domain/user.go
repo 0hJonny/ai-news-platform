@@ -20,6 +20,7 @@ type UserParams struct {
 	ID           string
 	Email        *string
 	PasswordHash *string
+	Name         *string
 	Role         UserRole
 }
 
@@ -27,6 +28,7 @@ type User struct {
 	CreatedAt    time.Time
 	Email        *string
 	PasswordHash *string
+	Name         *string
 	ID           string
 	Role         UserRole
 }
@@ -42,6 +44,16 @@ func NewUser(params UserParams) (User, error) {
 			return User{}, ErrInvalidEmail
 		}
 		cleanEmail = &emailStr
+	}
+
+	// 1b. The display name is optional and has no format requirements —
+	// just trim it, and treat a blank string as "not provided".
+	var cleanName *string
+	if params.Name != nil {
+		nameStr := strings.TrimSpace(*params.Name)
+		if nameStr != "" {
+			cleanName = &nameStr
+		}
 	}
 
 	// 2. Default role if an empty string was passed
@@ -61,6 +73,7 @@ func NewUser(params UserParams) (User, error) {
 		ID:           params.ID,
 		Email:        cleanEmail,
 		PasswordHash: params.PasswordHash,
+		Name:         cleanName,
 		Role:         role,
 		CreatedAt:    time.Now().UTC(),
 	}, nil

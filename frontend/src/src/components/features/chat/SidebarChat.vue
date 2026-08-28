@@ -28,8 +28,7 @@ const closeOnMobile = () => {
 
 const userNickname = computed(() => {
   if (authStore.isLoading) return 'Подключение...'
-  // return authStore.user?.user_name || authStore.user?.email || 'Аноним'
-  return 'Аноним'
+  return authStore.user?.name || authStore.user?.email || 'Аноним'
 })
 
 const userInitial = computed(() => {
@@ -53,6 +52,10 @@ const initAuth = async () => {
   }
 
   if (!authStore.isAuthenticated) return
+
+  // Fire-and-forget: the sidebar just falls back to its default nickname
+  // until this resolves, so it shouldn't block session loading.
+  void authStore.fetchProfile()
 
   await chatStore.loadSessions()
 

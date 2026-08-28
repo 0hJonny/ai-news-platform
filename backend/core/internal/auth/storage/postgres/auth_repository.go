@@ -43,6 +43,7 @@ func (r *PostgresRepository) CreateUser(ctx context.Context, user *domain.User) 
 		Email:        user.Email,
 		PasswordHash: user.PasswordHash,
 		Role:         dbRole, // Pass the plain domain.UserRole type
+		Name:         user.Name,
 	})
 	if err != nil {
 		var pgErr *pgconn.PgError
@@ -57,6 +58,7 @@ func (r *PostgresRepository) CreateUser(ctx context.Context, user *domain.User) 
 		Email:        dbUser.Email,
 		PasswordHash: dbUser.PasswordHash,
 		Role:         dbUser.Role, // Maps one-to-one cleanly
+		Name:         dbUser.Name,
 		CreatedAt:    dbUser.CreatedAt.Time,
 	}, nil
 }
@@ -77,6 +79,33 @@ func (r *PostgresRepository) GetUserByEmail(ctx context.Context, email string) (
 		Email:        dbUser.Email,
 		PasswordHash: dbUser.PasswordHash,
 		Role:         dbUser.Role,
+		Name:         dbUser.Name,
+		CreatedAt:    dbUser.CreatedAt.Time,
+	}, nil
+}
+
+func (r *PostgresRepository) GetUserByID(ctx context.Context, id string) (domain.User, error) {
+	q := r.getQueries(ctx)
+
+	var dbID pgtype.UUID
+	if err := dbID.Scan(id); err != nil {
+		return domain.User{}, fmt.Errorf("failed to parse user uuid: %w", err)
+	}
+
+	dbUser, err := q.GetUserById(ctx, dbID)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return domain.User{}, domain.ErrNotFound
+		}
+		return domain.User{}, err
+	}
+
+	return domain.User{
+		ID:           dbUser.ID.String(),
+		Email:        dbUser.Email,
+		PasswordHash: dbUser.PasswordHash,
+		Role:         dbUser.Role,
+		Name:         dbUser.Name,
 		CreatedAt:    dbUser.CreatedAt.Time,
 	}, nil
 }
@@ -94,6 +123,7 @@ func (r *PostgresRepository) UpdateUser(ctx context.Context, user *domain.User) 
 	dbUser, err := q.UpdateUserToRegistered(ctx, UpdateUserToRegisteredParams{
 		Email:        user.Email,
 		PasswordHash: user.PasswordHash,
+		Name:         user.Name,
 		ID:           dbID,
 	})
 	if err != nil {
@@ -111,6 +141,7 @@ func (r *PostgresRepository) UpdateUser(ctx context.Context, user *domain.User) 
 		Email:        dbUser.Email,
 		PasswordHash: dbUser.PasswordHash,
 		Role:         dbUser.Role, // Will already be UserRoleUser here
+		Name:         dbUser.Name,
 		CreatedAt:    dbUser.CreatedAt.Time,
 	}, nil
 }

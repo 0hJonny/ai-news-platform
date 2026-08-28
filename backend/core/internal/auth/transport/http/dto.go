@@ -3,6 +3,7 @@ package http
 type AuthRequest struct {
 	Email    string `json:"email"`
 	Password string `json:"password"`
+	Name     string `json:"name,omitempty"`
 }
 
 type TokenResponse struct {
@@ -10,6 +11,22 @@ type TokenResponse struct {
 	ExpiresAt int64  `json:"expires_at"`
 }
 
+type UserResponse struct {
+	ID    string `json:"id"`
+	Email string `json:"email"`
+	Name  string `json:"name"`
+	Role  string `json:"role"`
+}
+
+// ErrorResponse mirrors the gateway's authErrorBody shape ({"error":
+// {"code","message"}}) so the frontend has one consistent contract for
+// reading a machine-readable error code, whether the request was rejected
+// by the gateway's AuthMiddleware or by this service directly.
 type ErrorResponse struct {
-	Error string `json:"error"`
+	Error ErrorBody `json:"error"`
+}
+
+type ErrorBody struct {
+	Code    string `json:"code"`
+	Message string `json:"message"`
 }

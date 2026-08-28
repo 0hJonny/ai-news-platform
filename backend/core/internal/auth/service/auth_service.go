@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -29,13 +30,18 @@ func NewAuthService(txManager postgres.TxManager, repo domain.UserRepository, se
 	}
 }
 
-// Signature changed: anonUserID was added
-func (s *AuthServiceImpl) Register(ctx context.Context, email, password, anonUserID string) (Token, error) {
+// Signature changed: name and anonUserID were added
+func (s *AuthServiceImpl) Register(ctx context.Context, email, password, name, anonUserID string) (Token, error) {
 	hash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	if err != nil {
 		return Token{}, fmt.Errorf("failed to hash password: %w", err)
 	}
 	hashStr := string(hash)
+
+	var namePtr *string
+	if trimmed := strings.TrimSpace(name); trimmed != "" {
+		namePtr = &trimmed
+	}
 
 	tx, txCtx, err := s.txManager.Begin(ctx)
 	if err != nil {
@@ -53,6 +59,7 @@ func (s *AuthServiceImpl) Register(ctx context.Context, email, password, anonUse
 			ID:           anonUserID,
 			Email:        &email,
 			PasswordHash: &hashStr,
+			Name:         namePtr,
 			Role:         domain.UserRoleUser,
 		})
 		if err != nil {
@@ -68,6 +75,7 @@ func (s *AuthServiceImpl) Register(ctx context.Context, email, password, anonUse
 		domainUser, err := domain.NewUser(domain.UserParams{
 			Email:        &email,
 			PasswordHash: &hashStr,
+			Name:         namePtr,
 			Role:         domain.UserRoleUser,
 		})
 		if err != nil {
@@ -131,6 +139,10 @@ func (s *AuthServiceImpl) Login(ctx context.Context, email, password string) (To
 	}
 
 	return s.generateToken(user.ID, user.Role)
+}
+
+func (s *AuthServiceImpl) GetProfile(ctx context.Context, userID string) (domain.User, error) {
+	return s.repo.GetUserByID(ctx, userID)
 }
 
 func (s *AuthServiceImpl) ValidateToken(ctx context.Context, tokenString string) (string, error) {
