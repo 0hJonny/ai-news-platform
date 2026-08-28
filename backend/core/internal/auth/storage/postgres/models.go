@@ -63,4 +63,5 @@ type AuthUsers struct {
 	CreatedAt    pgtype.Timestamptz `json:"created_at"`
 	UpdatedAt    pgtype.Timestamptz `json:"updated_at"`
 	Name         *string            `json:"name"`
+	Login        *string            `json:"login"`
 }

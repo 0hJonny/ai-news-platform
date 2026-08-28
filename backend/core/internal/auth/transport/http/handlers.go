@@ -21,8 +21,8 @@ func NewHandler(svc service.AuthService, log *slog.Logger) *Handler {
 	}
 }
 
-func (h *Handler) respondWithError(w http.ResponseWriter, statusCode int, errCode, message string) {
-	h.respondWithJSON(w, statusCode, ErrorResponse{Error: ErrorBody{Code: errCode, Message: message}})
+func (h *Handler) respondWithError(w http.ResponseWriter, statusCode int, errCode string) {
+	h.respondWithJSON(w, statusCode, ErrorResponse{Error: ErrorBody{Code: errCode, Message: messageForCode(errCode)}})
 }
 
 func (h *Handler) respondWithJSON(w http.ResponseWriter, code int, payload any) {

@@ -1,7 +1,18 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { createAuthRepository } from '@/services/auth'
-import type { AuthRequest, UserProfile } from '@/types/auth/auth'
+import type {
+  AuthOutcome,
+  AuthRequest,
+  UserProfile,
+  VerificationChallenge,
+} from '@/types/auth/auth'
+
+// What login()/register() resolve to once the server responds successfully:
+// either a real session, or a mid-flow confirmation step (see
+// VerificationChallenge). `false` (returned by the callers below on error)
+// stays separate so callers can `if (result)` without a type guard.
+export type AuthFlowStatus = 'authenticated' | 'verification_required'
 
 export const useAuthStore = defineStore('auth', () => {
   const repo = createAuthRepository()
@@ -15,6 +26,12 @@ export const useAuthStore = defineStore('auth', () => {
   // token but the modals still need to know whether to offer "log back in"
   // (real account) or just mint a fresh guest session (was already a guest).
   const isGuest = ref<boolean>(localStorage.getItem('isGuest') !== 'false')
+
+  // Set when login/register comes back asking for an extra confirmation
+  // step instead of a token. Nothing produces this today (see AuthOutcome),
+  // so it's always null in practice — it's here so a verification screen has
+  // somewhere to read the challenge from once the backend supports one.
+  const pendingVerification = ref<VerificationChallenge | null>(null)
 
   const errorCode = ref<string | null>(null)
   const errorDetails = ref<Record<string, unknown> | null>(null)
@@ -52,6 +69,18 @@ export const useAuthStore = defineStore('auth', () => {
     return false
   }
 
+  // Shared by login/register/anonymousLogin: applies whichever branch of
+  // AuthOutcome the server returned.
+  const _applyOutcome = (outcome: AuthOutcome, guest: boolean): AuthFlowStatus => {
+    if (outcome.kind === 'verification_required') {
+      pendingVerification.value = outcome.challenge
+      return 'verification_required'
+    }
+    pendingVerification.value = null
+    _handleSuccess(outcome.data.token, guest)
+    return 'authenticated'
+  }
+
   const login = async (credentials: AuthRequest) => {
     isLoading.value = true
     clearErrors()
@@ -60,7 +89,7 @@ export const useAuthStore = defineStore('auth', () => {
     isLoading.value = false
 
     if (result.success) {
-      return _handleSuccess(result.data.token, false)
+      return _applyOutcome(result.data, false)
     }
     return _handleError(result.error)
   }
@@ -73,9 +102,18 @@ export const useAuthStore = defineStore('auth', () => {
     isLoading.value = false
 
     if (result.success) {
-      return _handleSuccess(result.data.token, false)
+      return _applyOutcome(result.data, false)
     }
     return _handleError(result.error)
+  }
+
+  // Not gated by isLoading/errorCode on purpose — this is a debounced,
+  // read-only lookup the register form fires on every settled keystroke of
+  // the login field, and it shouldn't disable the submit button or clobber
+  // an unrelated error already on screen. Param named loginValue, not
+  // login, so it doesn't shadow the login() action above.
+  const checkLoginAvailability = (loginValue: string, signal?: AbortSignal) => {
+    return repo.checkLoginAvailability(loginValue, signal)
   }
 
   const anonymousLogin = async () => {
@@ -86,7 +124,7 @@ export const useAuthStore = defineStore('auth', () => {
     isLoading.value = false
 
     if (result.success) {
-      return _handleSuccess(result.data.token, true)
+      return _applyOutcome(result.data, true) === 'authenticated'
     }
     return _handleError(result.error)
   }
@@ -102,6 +140,7 @@ export const useAuthStore = defineStore('auth', () => {
     user.value = null
     isGuest.value = true
     localStorage.removeItem('isGuest')
+    pendingVerification.value = null
     clearErrors()
     isLoading.value = false
     sessionExpired.value = false
@@ -156,6 +195,7 @@ export const useAuthStore = defineStore('auth', () => {
     token,
     user,
     isGuest,
+    pendingVerification,
     errorCode,
     errorDetails,
     isLoading,
@@ -164,6 +204,7 @@ export const useAuthStore = defineStore('auth', () => {
     isAuthenticated,
     register,
     login,
+    checkLoginAvailability,
     anonymousLogin,
     logout,
     notifySessionExpired,

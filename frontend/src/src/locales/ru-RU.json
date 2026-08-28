@@ -119,19 +119,47 @@
     "submit": "Войти",
     "loading": "Вход...",
     "create_account": "Создать аккаунт",
-    "privacy": "Политика конфиденциальности"
+    "privacy": "Политика конфиденциальности",
+    "verification": {
+      "title": "Требуется подтверждение",
+      "subtitle": "Проверьте {target} и следуйте инструкциям, чтобы завершить вход.",
+      "backToLogin": "Назад ко входу"
+    }
   },
   "register": {
     "title": "Создать аккаунт",
     "subtitle": "Заполните данные для регистрации",
     "name_placeholder": "Имя",
     "email_placeholder": "Email",
+    "login_placeholder": "Логин",
+    "login_checking": "Проверяем доступность...",
+    "login_available": "Логин свободен",
+    "login_taken": "Логин занят",
+    "login_suggestions_label": "Попробуйте:",
     "password_placeholder": "Пароль",
     "confirm_password_placeholder": "Подтвердите пароль",
     "submit": "Зарегистрироваться",
     "loading": "Создание аккаунта...",
     "already_have_account": "Уже есть аккаунт?",
-    "privacy": "Политика конфиденциальности"
+    "privacy": "Политика конфиденциальности",
+    "verification": {
+      "title": "Подтвердите почту",
+      "subtitle": "Мы отправили письмо на {target}. Перейдите по ссылке из письма, чтобы завершить регистрацию.",
+      "backToLogin": "Перейти ко входу"
+    }
+  },
+  "userMenu": {
+    "guestTitle": "Гостевой доступ",
+    "guestSubtitle": "История чата хранится только в этом браузере",
+    "createAccount": "Создать аккаунт",
+    "haveAccount": "У меня уже есть аккаунт",
+    "accountFallback": "Аккаунт",
+    "logout": "Выйти",
+    "connecting": "Подключение...",
+    "statusError": "Ошибка сети",
+    "statusLoading": "Авторизация...",
+    "statusGuest": "Гость",
+    "statusOnline": "Онлайн"
   },
   "sessionExpired": {
     "title": "Сессия истекла",
@@ -153,7 +181,10 @@
     "PASS_UPPERCASE": "Заглавная буква (A-Z)",
     "PASS_LOWERCASE": "Строчная буква (a-z)",
     "PASS_NUMBER": "Цифра (0-9)",
-    "PASS_SPECIAL_CHAR": "Спецсимвол (!#&*%...)"
+    "PASS_SPECIAL_CHAR": "Спецсимвол (!#&*%...)",
+    "LOGIN_LENGTH": "От 3 до 20 символов",
+    "LOGIN_STARTS_WITH_LETTER": "Начинается с латинской буквы",
+    "LOGIN_CHARSET": "Только латиница, цифры и _"
   },
   "errors": {
     "api": {
@@ -163,12 +194,16 @@
       "AUTH_TOO_MANY_ATTEMPTS": "Слишком много попыток. Попробуйте через {minutes} мин.",
       "AUTH_EMAIL_TAKEN": "Этот email уже зарегистрирован.",
       "AUTH_INVALID_EMAIL": "Некорректный формат email.",
+      "AUTH_LOGIN_TAKEN": "Этот логин уже занят.",
+      "AUTH_INVALID_LOGIN": "Некорректный формат логина.",
       "NETWORK_ERROR": "Ошибка сети. Проверьте подключение к интернету.",
       "SERVER_ERROR": "Сервер временно недоступен. Попробуйте позже.",
       "UNKNOWN": "Произошла неизвестная ошибка."
     },
     "VALIDATION_PASSWORD_INVALID": "Пароль должен содержать минимум 8 символов, заглавную и строчную латинские буквы, цифру и спецсимвол.",
-    "VALIDATION_PASSWORDS_MISMATCH": "Пароли не совпадают."
+    "VALIDATION_PASSWORDS_MISMATCH": "Пароли не совпадают.",
+    "VALIDATION_LOGIN_INVALID": "Логин должен начинаться с буквы и содержать 3-20 латинских букв, цифр или _.",
+    "VALIDATION_LOGIN_TAKEN": "Этот логин уже занят, выберите другой."
   },
   "steps": {
     "init": "Инициализация...",

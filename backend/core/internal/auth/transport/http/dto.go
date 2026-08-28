@@ -4,6 +4,11 @@ type AuthRequest struct {
 	Email    string `json:"email"`
 	Password string `json:"password"`
 	Name     string `json:"name,omitempty"`
+	Login    string `json:"login,omitempty"`
+}
+
+type LoginAvailabilityResponse struct {
+	Available bool `json:"available"`
 }
 
 type TokenResponse struct {
@@ -15,6 +20,7 @@ type UserResponse struct {
 	ID    string `json:"id"`
 	Email string `json:"email"`
 	Name  string `json:"name"`
+	Login string `json:"login"`
 	Role  string `json:"role"`
 }
 

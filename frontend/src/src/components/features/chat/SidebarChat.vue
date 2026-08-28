@@ -4,6 +4,7 @@ import { useRouter } from 'vue-router'
 import { useChatStore } from '@/stores/chatStore/chatStore'
 import { useAuthStore } from '@/stores/authStore/authStore'
 import ThemeSwitcherCompact from '@/components/shared/ThemeSwitcherCompact.vue'
+import UserMenu from '@/components/features/chat/UserMenu.vue'
 
 const chatStore = useChatStore()
 const authStore = useAuthStore()
@@ -25,17 +26,6 @@ const closeOnMobile = () => {
     chatStore.isSidebarOpen = false
   }
 }
-
-const userNickname = computed(() => {
-  if (authStore.isLoading) return 'Подключение...'
-  return authStore.user?.name || authStore.user?.email || 'Аноним'
-})
-
-const userInitial = computed(() => {
-  if (authStore.isLoading) return '...'
-  const name = userNickname.value.trim()
-  return name ? name.charAt(0).toUpperCase() : '?'
-})
 
 const initAuth = async () => {
   // Don't silently mint a new guest token while a session-expired/invalid
@@ -313,25 +303,7 @@ const handleDelete = async (chatId: string, event: Event) => {
     </div>
 
     <div class="sidebar-footer">
-      <button
-        class="user-profile"
-        :title="userNickname"
-        :class="{ 'is-loading': authStore.isLoading }"
-      >
-        <div class="avatar">{{ userInitial }}</div>
-        <div class="user-info" v-show="isOpen">
-          <span class="nickname">{{ userNickname }}</span>
-          <span class="status" :class="{ 'status-error': authStore.errorCode }">
-            {{
-              authStore.errorCode
-                ? 'Ошибка сети'
-                : authStore.isAuthenticated
-                  ? 'Онлайн'
-                  : 'Авторизация...'
-            }}
-          </span>
-        </div>
-      </button>
+      <UserMenu :sidebar-open="isOpen" />
     </div>
   </aside>
 </template>
@@ -593,20 +565,7 @@ const handleDelete = async (chatId: string, event: Event) => {
   background: var(--color-bkg-soft);
 }
 
-.user-profile {
-  width: 100%;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 8px;
-  border-radius: 20px;
-  background: transparent;
-  border: none;
-  cursor: pointer;
-  transition: background 0.2s;
-}
-
-.sidebar.collapsed .user-profile {
+.sidebar.collapsed .sidebar-footer :deep(.user-profile) {
   padding: 8px;
   width: 44px;
   height: 44px;
@@ -615,69 +574,9 @@ const handleDelete = async (chatId: string, event: Event) => {
   margin: 0 auto;
 }
 
-.user-profile:hover {
-  background: var(--color-border);
-}
-
-.avatar {
-  flex-shrink: 0;
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  background: var(--color-text-title, #333);
-  color: var(--color-bkg-mute);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 600;
-  font-size: 14px;
-}
-
-.user-info {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  min-width: 0;
-  text-align: left;
-}
-
-.nickname {
-  font-size: 14px;
-  font-weight: 500;
-  color: var(--color-text-primary);
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.status {
-  font-size: 11px;
-  color: var(--color-text-sub);
-}
-
 .new-chat-btn:disabled {
   opacity: 0.6;
   cursor: not-allowed;
-}
-
-.user-profile.is-loading {
-  animation: pulse 1.5s infinite;
-  cursor: wait;
-}
-
-.status-error {
-  color: #ff4d4f !important;
-}
-
-@keyframes pulse {
-  0% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.6;
-  }
-  100% {
-    opacity: 1;
-  }
 }
 
 .sidebar-overlay {

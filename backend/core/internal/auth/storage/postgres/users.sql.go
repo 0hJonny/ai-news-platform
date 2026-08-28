@@ -13,9 +13,9 @@ import (
 )
 
 const createUser = `-- name: CreateUser :one
-INSERT INTO auth.users (email, password_hash, role, name)
-VALUES ($1, $2, $3, $4)
-RETURNING id, email, password_hash, role, created_at, updated_at, name
+INSERT INTO auth.users (email, password_hash, role, name, login)
+VALUES ($1, $2, $3, $4, $5)
+RETURNING id, email, password_hash, role, created_at, updated_at, name, login
 `
 
 type CreateUserParams struct {
@@ -23,10 +23,11 @@ type CreateUserParams struct {
 	PasswordHash *string         `json:"password_hash"`
 	Role         domain.UserRole `json:"role"`
 	Name         *string         `json:"name"`
+	Login        *string         `json:"login"`
 }
 
 func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (AuthUsers, error) {
-	row := q.db.QueryRow(ctx, createUser, arg.Email, arg.PasswordHash, arg.Role, arg.Name)
+	row := q.db.QueryRow(ctx, createUser, arg.Email, arg.PasswordHash, arg.Role, arg.Name, arg.Login)
 	var i AuthUsers
 	err := row.Scan(
 		&i.ID,
@@ -36,6 +37,7 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (AuthUse
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.Name,
+		&i.Login,
 	)
 	return i, err
 }
@@ -46,7 +48,8 @@ SELECT a.id,
        a.password_hash,
        a.created_at,
        a.role,
-       a.name
+       a.name,
+       a.login
   FROM auth.users a
 WHERE a.email = $1
 LIMIT 1
@@ -59,6 +62,7 @@ type GetUserByEmailRow struct {
 	CreatedAt    pgtype.Timestamptz `json:"created_at"`
 	Role         domain.UserRole    `json:"role"`
 	Name         *string            `json:"name"`
+	Login        *string            `json:"login"`
 }
 
 func (q *Queries) GetUserByEmail(ctx context.Context, email *string) (GetUserByEmailRow, error) {
@@ -71,6 +75,7 @@ func (q *Queries) GetUserByEmail(ctx context.Context, email *string) (GetUserByE
 		&i.CreatedAt,
 		&i.Role,
 		&i.Name,
+		&i.Login,
 	)
 	return i, err
 }
@@ -81,7 +86,8 @@ SELECT a.id,
        a.password_hash,
        a.created_at,
        a.role,
-       a.name
+       a.name,
+       a.login
   FROM auth.users a
 WHERE a.id = $1
 LIMIT 1
@@ -94,6 +100,7 @@ type GetUserByIdRow struct {
 	CreatedAt    pgtype.Timestamptz `json:"created_at"`
 	Role         domain.UserRole    `json:"role"`
 	Name         *string            `json:"name"`
+	Login        *string            `json:"login"`
 }
 
 func (q *Queries) GetUserById(ctx context.Context, id pgtype.UUID) (GetUserByIdRow, error) {
@@ -106,6 +113,7 @@ func (q *Queries) GetUserById(ctx context.Context, id pgtype.UUID) (GetUserByIdR
 		&i.CreatedAt,
 		&i.Role,
 		&i.Name,
+		&i.Login,
 	)
 	return i, err
 }
@@ -115,21 +123,23 @@ UPDATE auth.users
    SET email = $1,
        password_hash = $2,
        name = $3,
+       login = $4,
        role = 'user',
        updated_at = CURRENT_TIMESTAMP
- WHERE id = $4
-RETURNING id, email, password_hash, role, created_at, updated_at, name
+ WHERE id = $5
+RETURNING id, email, password_hash, role, created_at, updated_at, name, login
 `
 
 type UpdateUserToRegisteredParams struct {
 	Email        *string     `json:"email"`
 	PasswordHash *string     `json:"password_hash"`
 	Name         *string     `json:"name"`
+	Login        *string     `json:"login"`
 	ID           pgtype.UUID `json:"id"`
 }
 
 func (q *Queries) UpdateUserToRegistered(ctx context.Context, arg UpdateUserToRegisteredParams) (AuthUsers, error) {
-	row := q.db.QueryRow(ctx, updateUserToRegistered, arg.Email, arg.PasswordHash, arg.Name, arg.ID)
+	row := q.db.QueryRow(ctx, updateUserToRegistered, arg.Email, arg.PasswordHash, arg.Name, arg.Login, arg.ID)
 	var i AuthUsers
 	err := row.Scan(
 		&i.ID,
@@ -139,6 +149,18 @@ func (q *Queries) UpdateUserToRegistered(ctx context.Context, arg UpdateUserToRe
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.Name,
+		&i.Login,
 	)
 	return i, err
+}
+
+const isLoginAvailable = `-- name: IsLoginAvailable :one
+SELECT NOT EXISTS (SELECT 1 FROM auth.users WHERE login = $1) AS available
+`
+
+func (q *Queries) IsLoginAvailable(ctx context.Context, login *string) (bool, error) {
+	row := q.db.QueryRow(ctx, isLoginAvailable, login)
+	var available bool
+	err := row.Scan(&available)
+	return available, err
 }

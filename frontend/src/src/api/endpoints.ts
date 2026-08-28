@@ -6,6 +6,7 @@ export const ENDPOINTS = {
   REGISTER: '/auth/register',
   ANONIMOUS: '/auth/anonimous',
   USERDATA: '/auth/user',
+  LOGIN_AVAILABLE: '/auth/login-available',
   FEEDBACK: '/agents/chat/feedback',
   STREAM: '/agents/chat/stream',
   SESSION: '/chats/sessions',

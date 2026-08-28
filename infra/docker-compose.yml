@@ -112,12 +112,17 @@ services:
     working_dir: /app
     volumes:
       - ../backend/core:/app
+      # Canonical login/username format contract (also read directly by the
+      # frontend via its own "@shared" alias) — see
+      # backend/core/internal/auth/domain/user.go (loginRulesPath).
+      - ../shared:/shared
     command: ["go", "run", "./cmd/auth"]
     environment:
       DATABASE_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}?sslmode=disable
       JWT_SECRET: ${JWT_SECRET}
       PORT: "8081"
       GRPC_PORT: "50051"
+      LOGIN_RULES_PATH: /shared/auth/login-rules.json
     depends_on:
       migrate:
         condition: service_completed_successfully
@@ -288,6 +293,10 @@ services:
     working_dir: /app
     volumes:
       - ../frontend/src:/app
+      # Canonical login/username format contract, read via the "@shared"
+      # alias in vite.config.ts (also read directly by the auth service —
+      # see backend/core/internal/auth/domain/user.go, loginRulesPath).
+      - ../shared:/shared
     command: ["sh", "-c", "npm install && npm run dev -- --host --port 3001"]
     environment:
       VITE_IMAGE_BASE_URL: "http://localhost:9000"

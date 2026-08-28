@@ -30,8 +30,8 @@ func NewAuthService(txManager postgres.TxManager, repo domain.UserRepository, se
 	}
 }
 
-// Signature changed: name and anonUserID were added
-func (s *AuthServiceImpl) Register(ctx context.Context, email, password, name, anonUserID string) (Token, error) {
+// Signature changed: name, login, and anonUserID were added
+func (s *AuthServiceImpl) Register(ctx context.Context, email, password, name, login, anonUserID string) (Token, error) {
 	hash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	if err != nil {
 		return Token{}, fmt.Errorf("failed to hash password: %w", err)
@@ -60,6 +60,7 @@ func (s *AuthServiceImpl) Register(ctx context.Context, email, password, name, a
 			Email:        &email,
 			PasswordHash: &hashStr,
 			Name:         namePtr,
+			Login:        &login,
 			Role:         domain.UserRoleUser,
 		})
 		if err != nil {
@@ -76,6 +77,7 @@ func (s *AuthServiceImpl) Register(ctx context.Context, email, password, name, a
 			Email:        &email,
 			PasswordHash: &hashStr,
 			Name:         namePtr,
+			Login:        &login,
 			Role:         domain.UserRoleUser,
 		})
 		if err != nil {
@@ -143,6 +145,20 @@ func (s *AuthServiceImpl) Login(ctx context.Context, email, password string) (To
 
 func (s *AuthServiceImpl) GetProfile(ctx context.Context, userID string) (domain.User, error) {
 	return s.repo.GetUserByID(ctx, userID)
+}
+
+// CheckLoginAvailable is a plain read: it never writes, so calling it on
+// every debounced keystroke while the user edits the login field doesn't
+// put write load on the table. It is only a UX hint — the UNIQUE
+// constraint (enforced in Register via uniqueViolationToDomainErr) is what
+// actually guarantees no collision, since a race is still possible between
+// this check and the real INSERT/UPDATE.
+func (s *AuthServiceImpl) CheckLoginAvailable(ctx context.Context, login string) (bool, error) {
+	normalized := strings.ToLower(strings.TrimSpace(login))
+	if !domain.ValidLoginFormat(normalized) {
+		return false, domain.ErrInvalidLogin
+	}
+	return s.repo.IsLoginAvailable(ctx, normalized)
 }
 
 func (s *AuthServiceImpl) ValidateToken(ctx context.Context, tokenString string) (string, error) {

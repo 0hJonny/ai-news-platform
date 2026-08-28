@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
@@ -12,6 +13,19 @@ import (
 	"github.com/0hJonny/langfuse-agents/internal/auth/domain"
 	"github.com/0hJonny/langfuse-agents/pkg/postgres"
 )
+
+// uniqueViolationToDomainErr maps a 23505 error on auth.users to the
+// specific field that collided, based on the constraint name Postgres
+// reports (users_email_key / users_login_format's sibling users_login_key —
+// both auto-named by the column-level UNIQUE constraints in
+// sql/auth/migrations). Falls back to the email error for anything else so
+// existing callers keep working if a future unique constraint is added.
+func uniqueViolationToDomainErr(pgErr *pgconn.PgError) error {
+	if strings.Contains(pgErr.ConstraintName, "login") {
+		return domain.ErrLoginTaken
+	}
+	return domain.ErrUserAlreadyExists
+}
 
 var _ domain.UserRepository = (*PostgresRepository)(nil)
 
@@ -44,11 +58,12 @@ func (r *PostgresRepository) CreateUser(ctx context.Context, user *domain.User) 
 		PasswordHash: user.PasswordHash,
 		Role:         dbRole, // Pass the plain domain.UserRole type
 		Name:         user.Name,
+		Login:        user.Login,
 	})
 	if err != nil {
 		var pgErr *pgconn.PgError
 		if errors.As(err, &pgErr) && pgErr.Code == postgres.CodeUniqueViolation {
-			return domain.User{}, domain.ErrUserAlreadyExists
+			return domain.User{}, uniqueViolationToDomainErr(pgErr)
 		}
 		return domain.User{}, err
 	}
@@ -59,6 +74,7 @@ func (r *PostgresRepository) CreateUser(ctx context.Context, user *domain.User) 
 		PasswordHash: dbUser.PasswordHash,
 		Role:         dbUser.Role, // Maps one-to-one cleanly
 		Name:         dbUser.Name,
+		Login:        dbUser.Login,
 		CreatedAt:    dbUser.CreatedAt.Time,
 	}, nil
 }
@@ -80,6 +96,7 @@ func (r *PostgresRepository) GetUserByEmail(ctx context.Context, email string) (
 		PasswordHash: dbUser.PasswordHash,
 		Role:         dbUser.Role,
 		Name:         dbUser.Name,
+		Login:        dbUser.Login,
 		CreatedAt:    dbUser.CreatedAt.Time,
 	}, nil
 }
@@ -106,6 +123,7 @@ func (r *PostgresRepository) GetUserByID(ctx context.Context, id string) (domain
 		PasswordHash: dbUser.PasswordHash,
 		Role:         dbUser.Role,
 		Name:         dbUser.Name,
+		Login:        dbUser.Login,
 		CreatedAt:    dbUser.CreatedAt.Time,
 	}, nil
 }
@@ -124,13 +142,14 @@ func (r *PostgresRepository) UpdateUser(ctx context.Context, user *domain.User) 
 		Email:        user.Email,
 		PasswordHash: user.PasswordHash,
 		Name:         user.Name,
+		Login:        user.Login,
 		ID:           dbID,
 	})
 	if err != nil {
 		var pgErr *pgconn.PgError
-		// If the email the anonymous user entered is already taken by another account
+		// The anonymous user's chosen email or login is already taken by another account
 		if errors.As(err, &pgErr) && pgErr.Code == postgres.CodeUniqueViolation {
-			return domain.User{}, domain.ErrUserAlreadyExists
+			return domain.User{}, uniqueViolationToDomainErr(pgErr)
 		}
 		return domain.User{}, err
 	}
@@ -142,6 +161,12 @@ func (r *PostgresRepository) UpdateUser(ctx context.Context, user *domain.User) 
 		PasswordHash: dbUser.PasswordHash,
 		Role:         dbUser.Role, // Will already be UserRoleUser here
 		Name:         dbUser.Name,
+		Login:        dbUser.Login,
 		CreatedAt:    dbUser.CreatedAt.Time,
 	}, nil
+}
+
+func (r *PostgresRepository) IsLoginAvailable(ctx context.Context, login string) (bool, error) {
+	q := r.getQueries(ctx)
+	return q.IsLoginAvailable(ctx, &login)
 }

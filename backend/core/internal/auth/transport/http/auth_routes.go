@@ -24,6 +24,7 @@ func (h *Handler) RegisterRoutes() *chi.Mux {
 		r.Post("/login", h.HandleLogin)
 		r.Post("/anonimous", h.HandleAnonymousAuth)
 		r.Get("/user", h.HandleGetProfile)
+		r.Get("/login-available", h.HandleCheckLoginAvailable)
 	})
 
 	return r

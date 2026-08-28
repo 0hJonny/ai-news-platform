@@ -18,6 +18,11 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url)),
+      // ai_news_platform/shared — cross-service contracts (e.g. the login
+      // format both this app and backend/core validate against). Not part
+      // of this Vue project; see backend/core/internal/auth/domain/user.go
+      // (loginRulesPath) for the Go side reading the same file.
+      '@shared': fileURLToPath(new URL('../../shared', import.meta.url)),
     },
   },
 })

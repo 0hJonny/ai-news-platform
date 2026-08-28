@@ -102,7 +102,12 @@
     "submit": "Sign In",
     "loading": "Signing in...",
     "create_account": "Create account",
-    "privacy": "Privacy Policy"
+    "privacy": "Privacy Policy",
+    "verification": {
+      "title": "Verification required",
+      "subtitle": "Check {target} and follow the instructions to finish signing in.",
+      "backToLogin": "Back to sign in"
+    }
   },
   "chat": {
     "thinking": {
@@ -126,12 +131,35 @@
     "subtitle": "Enter your details to register",
     "name_placeholder": "Name",
     "email_placeholder": "Email",
+    "login_placeholder": "Login",
+    "login_checking": "Checking availability...",
+    "login_available": "Login is available",
+    "login_taken": "Login is taken",
+    "login_suggestions_label": "Try:",
     "password_placeholder": "Password",
     "confirm_password_placeholder": "Confirm password",
     "submit": "Sign up",
     "loading": "Creating account...",
     "already_have_account": "Already have an account?",
-    "privacy": "Privacy Policy"
+    "privacy": "Privacy Policy",
+    "verification": {
+      "title": "Confirm your email",
+      "subtitle": "We sent a link to {target}. Follow it to finish creating your account.",
+      "backToLogin": "Go to sign in"
+    }
+  },
+  "userMenu": {
+    "guestTitle": "Guest access",
+    "guestSubtitle": "Chat history is only stored in this browser",
+    "createAccount": "Create account",
+    "haveAccount": "I already have an account",
+    "accountFallback": "Account",
+    "logout": "Log out",
+    "connecting": "Connecting...",
+    "statusError": "Network error",
+    "statusLoading": "Signing in...",
+    "statusGuest": "Guest",
+    "statusOnline": "Online"
   },
   "sessionExpired": {
     "title": "Your session has expired",
@@ -153,7 +181,10 @@
     "PASS_UPPERCASE": "Uppercase letter (A-Z)",
     "PASS_LOWERCASE": "Lowercase letter (a-z)",
     "PASS_NUMBER": "Digit (0-9)",
-    "PASS_SPECIAL_CHAR": "Special character (!#&*%...)"
+    "PASS_SPECIAL_CHAR": "Special character (!#&*%...)",
+    "LOGIN_LENGTH": "3 to 20 characters",
+    "LOGIN_STARTS_WITH_LETTER": "Starts with a Latin letter",
+    "LOGIN_CHARSET": "Latin letters, digits and _ only"
   },
   "errors": {
     "api": {
@@ -163,11 +194,15 @@
       "AUTH_TOO_MANY_ATTEMPTS": "Too many attempts. Try again in {minutes} min.",
       "AUTH_EMAIL_TAKEN": "This email is already registered.",
       "AUTH_INVALID_EMAIL": "Invalid email format.",
+      "AUTH_LOGIN_TAKEN": "This login is already taken.",
+      "AUTH_INVALID_LOGIN": "Invalid login format.",
       "NETWORK_ERROR": "Network error. Please check your connection.",
       "SERVER_ERROR": "Server is temporarily unavailable. Try again later.",
       "UNKNOWN": "An unknown error occurred."
     },
     "VALIDATION_PASSWORD_INVALID": "Password must contain at least 8 characters, uppercase and lowercase Latin letters, a digit, and a special character.",
-    "VALIDATION_PASSWORDS_MISMATCH": "Passwords do not match."
+    "VALIDATION_PASSWORDS_MISMATCH": "Passwords do not match.",
+    "VALIDATION_LOGIN_INVALID": "Login must start with a letter and contain 3-20 Latin letters, digits, or _.",
+    "VALIDATION_LOGIN_TAKEN": "This login is already taken, please choose another one."
   }
 }

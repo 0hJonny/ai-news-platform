@@ -4,10 +4,17 @@ import { useRouter } from 'vue-router'
 import { useLocaleStore } from '@/stores/locale/locale'
 import { useAuthStore } from '@/stores/authStore/authStore'
 import type { LocaleCode } from '@/locales/locales'
+import AuthVerificationPanel from '@/components/shared/AuthVerificationPanel.vue'
+import { useI18n } from 'vue-i18n'
 
 const router = useRouter()
 const localeStore = useLocaleStore()
 const authStore = useAuthStore()
+const { t } = useI18n()
+
+// 'form' is the only step reachable today — login() can only ever resolve
+// 'authenticated' until the backend emits verification_required (e.g. 2FA).
+const step = ref<'form' | 'verification'>('form')
 
 const email = ref('')
 const password = ref('')
@@ -24,13 +31,15 @@ const selectedLocale = computed({
 })
 
 const handleSubmit = async () => {
-  const success = await authStore.login({
+  const outcome = await authStore.login({
     email: email.value,
     password: password.value,
   })
 
-  if (success) {
+  if (outcome === 'authenticated') {
     router.push({ name: 'Home' })
+  } else if (outcome === 'verification_required') {
+    step.value = 'verification'
   }
 }
 </script>
@@ -38,60 +47,71 @@ const handleSubmit = async () => {
 <template>
   <div class="login-container">
     <div class="login-box">
-      <div class="header">
-        <h1 class="title">{{ $t('login.title') }}</h1>
-        <p class="subtitle">{{ $t('login.subtitle') }}</p>
-      </div>
-
-      <div v-if="authStore.errorCode" class="error-message">
-        {{ $t(`errors.${authStore.errorCode}`, authStore.errorDetails || {}) }}
-      </div>
-
-      <form @submit.prevent="handleSubmit" class="form">
-        <div class="input-group">
-          <input
-            v-model="email"
-            type="email"
-            :placeholder="$t('login.email_placeholder')"
-            class="input"
-            required
-          />
+      <AuthVerificationPanel
+        v-if="step === 'verification' && authStore.pendingVerification"
+        :title="t('login.verification.title')"
+        :subtitle="
+          t('login.verification.subtitle', { target: authStore.pendingVerification.target })
+        "
+        :back-label="t('login.verification.backToLogin')"
+        back-to="Login"
+      />
+      <template v-else>
+        <div class="header">
+          <h1 class="title">{{ $t('login.title') }}</h1>
+          <p class="subtitle">{{ $t('login.subtitle') }}</p>
         </div>
 
-        <div class="input-group">
-          <input
-            v-model="password"
-            type="password"
-            :placeholder="$t('login.password_placeholder')"
-            class="input"
-            required
-          />
-          <div class="forgot-password">
-            <a href="#" class="forgot-link">{{ $t('login.forgot_password') }}</a>
+        <div v-if="authStore.errorCode" class="error-message">
+          {{ $t(`errors.${authStore.errorCode}`, authStore.errorDetails || {}) }}
+        </div>
+
+        <form @submit.prevent="handleSubmit" class="form">
+          <div class="input-group">
+            <input
+              v-model="email"
+              type="email"
+              :placeholder="$t('login.email_placeholder')"
+              class="input"
+              required
+            />
+          </div>
+
+          <div class="input-group">
+            <input
+              v-model="password"
+              type="password"
+              :placeholder="$t('login.password_placeholder')"
+              class="input"
+              required
+            />
+            <div class="forgot-password">
+              <a href="#" class="forgot-link">{{ $t('login.forgot_password') }}</a>
+            </div>
+          </div>
+
+          <div class="actions">
+            <button type="submit" class="submit-btn">{{ $t('login.submit') }}</button>
+            <div class="create-account">
+              <RouterLink to="/register" class="create-link">
+                {{ $t('login.create_account') }}
+              </RouterLink>
+            </div>
+          </div>
+        </form>
+
+        <div class="footer">
+          <select v-model="selectedLocale" class="lang-select">
+            <option v-for="l in localeStore.AVAILABLE_LOCALES" :key="l.code" :value="l.code">
+              {{ l.name }}
+            </option>
+          </select>
+          <!-- <span class="language">Русский</span> -->
+          <div class="footer-links">
+            <a href="#" class="footer-link">{{ $t('login.privacy') }}</a>
           </div>
         </div>
-
-        <div class="actions">
-          <button type="submit" class="submit-btn">{{ $t('login.submit') }}</button>
-          <div class="create-account">
-            <RouterLink to="/register" class="create-link">
-              {{ $t('login.create_account') }}
-            </RouterLink>
-          </div>
-        </div>
-      </form>
-
-      <div class="footer">
-        <select v-model="selectedLocale" class="lang-select">
-          <option v-for="l in localeStore.AVAILABLE_LOCALES" :key="l.code" :value="l.code">
-            {{ l.name }}
-          </option>
-        </select>
-        <!-- <span class="language">Русский</span> -->
-        <div class="footer-links">
-          <a href="#" class="footer-link">{{ $t('login.privacy') }}</a>
-        </div>
-      </div>
+      </template>
     </div>
   </div>
 </template>

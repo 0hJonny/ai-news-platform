@@ -8,6 +8,8 @@ var (
 	ErrInvalidCredentials = errors.New("invalid email or password")
 	ErrNotFound           = errors.New("user not found")
 	ErrInvalidCreds       = errors.New("invalid credentials")
+	ErrInvalidLogin       = errors.New("invalid login format")
+	ErrLoginTaken         = errors.New("login already taken")
 	// ErrInvalidToken means the token is malformed, has a bad signature, or
 	// otherwise was never something this server issued (e.g. hand-edited).
 	ErrInvalidToken = errors.New("invalid token")
