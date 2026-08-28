@@ -13,6 +13,7 @@ import type {
 import { getErrorCode } from '@/utils/errorMapper'
 import type { IChatsRepository } from './IChatsRepository'
 import { ENDPOINTS } from '@/api/endpoints'
+import { useAuthStore } from '@/stores/authStore/authStore'
 
 function hasStringError(obj: unknown): obj is { error: string } {
   return (
@@ -116,6 +117,23 @@ export class ApiChatsRepository implements IChatsRepository {
 
       if (!response.ok || !response.body) {
         const errorText = await response.text().catch(() => 'Unknown error')
+        const errorCode = (() => {
+          try {
+            return JSON.parse(errorText)?.error?.code as string | undefined
+          } catch {
+            return undefined
+          }
+        })()
+
+        // Same exact (status, code) matching as the axios interceptor in
+        // http.ts — a bare 401/403 without the specific code must not be
+        // treated as an expired/invalid session (see http.ts for why).
+        if (response.status === 403 && errorCode === 'TOKEN_INVALID') {
+          useAuthStore().notifyInvalidSession()
+        } else if (response.status === 401 && errorCode === 'TOKEN_EXPIRED') {
+          useAuthStore().notifySessionExpired()
+        }
+
         return {
           success: false,
           error: {

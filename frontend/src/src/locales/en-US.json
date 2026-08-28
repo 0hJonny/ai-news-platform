@@ -133,6 +133,19 @@
     "already_have_account": "Already have an account?",
     "privacy": "Privacy Policy"
   },
+  "sessionExpired": {
+    "title": "Your session has expired",
+    "subtitle": "Log in or create an account to continue",
+    "loginBtn": "Log in",
+    "registerBtn": "Sign up",
+    "dismiss": "Continue without signing in"
+  },
+  "invalidSession": {
+    "title": "Something went wrong",
+    "subtitle": "Your credentials are invalid. Start a new guest session to continue.",
+    "action": "Start over",
+    "recovering": "Please wait..."
+  },
   "validation": {
     "PASS_MIN_LENGTH": "At least 8 characters",
     "PASS_UPPERCASE": "Uppercase letter (A-Z)",

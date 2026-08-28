@@ -2,8 +2,20 @@ package upstream
 
 import (
 	"context"
+	"errors"
+
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
 	"github.com/0hJonny/langfuse-agents/pkg/authclient/pb"
+)
+
+// ErrTokenExpired and ErrTokenInvalid let the HTTP layer tell "please log in
+// again" apart from "this token was never legitimately issued" without
+// depending on the auth service's internal domain package.
+var (
+	ErrTokenExpired = errors.New("token expired")
+	ErrTokenInvalid = errors.New("token invalid")
 )
 
 type AuthServiceClientAdapter struct {
@@ -23,7 +35,14 @@ func (a *AuthServiceClientAdapter) ValidateToken(ctx context.Context, token stri
 
 	resp, err := a.client.ValidateToken(ctx, &pb.ValidateTokenRequest{Token: token})
 	if err != nil {
-		return "", err
+		switch status.Code(err) {
+		case codes.Unauthenticated:
+			return "", ErrTokenExpired
+		case codes.PermissionDenied:
+			return "", ErrTokenInvalid
+		default:
+			return "", err
+		}
 	}
 
 	return resp.GetUserId(), nil

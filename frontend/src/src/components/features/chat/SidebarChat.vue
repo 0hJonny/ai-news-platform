@@ -39,13 +39,20 @@ const userInitial = computed(() => {
 })
 
 const initAuth = async () => {
-  if (!authStore.isAuthenticated) {
+  // Don't silently mint a new guest token while a session-expired/invalid
+  // recovery is pending (e.g. the user clicked "Login", then hit "back"
+  // before completing it) — that would orphan the chat history tied to the
+  // token that just got invalidated. Only the explicit "continue as guest"
+  // action (or a genuine first visit with neither flag set) should do that.
+  if (!authStore.isAuthenticated && !authStore.sessionExpired && !authStore.invalidSession) {
     const success = await authStore.anonymousLogin()
     if (!success) {
       console.error('Не удалось авторизоваться, список чатов не будет загружен.')
       return
     }
   }
+
+  if (!authStore.isAuthenticated) return
 
   await chatStore.loadSessions()
 

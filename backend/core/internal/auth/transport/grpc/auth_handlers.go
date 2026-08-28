@@ -29,8 +29,13 @@ func NewGRPCHandler(service TokenValidator) *GRPCHandler {
 func (h *GRPCHandler) ValidateToken(ctx context.Context, req *pb.ValidateTokenRequest) (*pb.ValidateTokenResponse, error) {
 	userID, err := h.service.ValidateToken(ctx, req.GetToken())
 	if err != nil {
+		if errors.Is(err, domain.ErrExpiredToken) {
+			return nil, status.Error(codes.Unauthenticated, "token expired")
+		}
 		if errors.Is(err, domain.ErrInvalidToken) {
-			return nil, status.Error(codes.Unauthenticated, "token is invalid or expired")
+			// Distinct code from the expired case: this token was never
+			// legitimately issued (bad signature, malformed, hand-edited).
+			return nil, status.Error(codes.PermissionDenied, "token invalid")
 		}
 
 		return nil, status.Error(codes.Internal, "internal server error")

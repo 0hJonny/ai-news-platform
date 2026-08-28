@@ -63,6 +63,17 @@ export const useChatStore = defineStore('chat', () => {
     streamProgress.value = ''
   }
 
+  // Wipes local chat state. Used whenever we're about to mint a brand new
+  // identity (fresh guest session, or after a hand-edited/invalid token was
+  // detected) so the UI never shows chat history that belongs to a
+  // different, no-longer-valid session.
+  const resetLocalState = () => {
+    stopStreaming()
+    chats.value = []
+    activeChatId.value = null
+    messagesMap.value = {}
+  }
+
   // --- Session CRUD ---
 
   const loadSessions = async () => {
@@ -396,6 +407,7 @@ export const useChatStore = defineStore('chat', () => {
     toggleSidebar,
     sendMessage,
     stopStreaming,
+    resetLocalState,
     likeMessage,
     dislikeMessage,
     sendFeedback,

@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
@@ -140,7 +141,18 @@ func (s *AuthServiceImpl) ValidateToken(ctx context.Context, tokenString string)
 		return s.secret, nil
 	})
 
-	if err != nil || token == nil || !token.Valid {
+	if err != nil {
+		// A well-formed, correctly-signed token that simply passed its exp
+		// claim is a normal "please log in again" case. Anything else
+		// (bad signature, malformed structure, wrong alg, hand-edited
+		// payload) means the token was never legitimately issued.
+		if errors.Is(err, jwt.ErrTokenExpired) {
+			return "", domain.ErrExpiredToken
+		}
+		return "", domain.ErrInvalidToken
+	}
+
+	if token == nil || !token.Valid {
 		return "", domain.ErrInvalidToken
 	}
 

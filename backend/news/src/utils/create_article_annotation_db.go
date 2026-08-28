@@ -39,7 +39,7 @@ func CreateArticleAnnotationDB(articleData *models.ArticleAnnotation) (models.Ar
 	}
 
 	if articleData.ThemeName != "" {
-		query = `SELECT theme_id FROM themes WHERE theme_name = ?`
+		query = `SELECT id AS theme_id FROM themes WHERE name = ?`
 		err = tx.Raw(query, articleData.ThemeName).Scan(&articleData).Error
 		if err != nil || articleData.ThemeID == 0 {
 			tx.Rollback()

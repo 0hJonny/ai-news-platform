@@ -8,20 +8,20 @@ func GetAnnotationQueue() (*[]models.ArticleQueryID, error) {
 	var articleQueue []models.ArticleQueryID
 
 	query := `
-	SELECT 
-		a.id AS article_id, 
-		ln.language_code AS native_language,
-		l.language_code,
-		l.language_name
-	FROM 
+	SELECT
+		a.id AS article_id,
+		ln.code AS native_language,
+		l.code AS language_code,
+		l.name AS language_name
+	FROM
 		articles a
-	CROSS JOIN 
+	CROSS JOIN
 		languages l
-	LEFT JOIN 
-		languages ln ON a.language_id = ln.language_id
-	LEFT JOIN 
-		annotations an ON a.id = an.article_id AND l.language_id = an.language_id
-	WHERE 
+	LEFT JOIN
+		languages ln ON a.language_id = ln.id
+	LEFT JOIN
+		annotations an ON a.id = an.article_id AND l.id = an.language_id
+	WHERE
 		an.article_id IS NULL
 	ORDER BY a.post_date DESC;`
 

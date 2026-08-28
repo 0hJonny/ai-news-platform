@@ -8,13 +8,13 @@ func insertArticleWithTags(articleID string, tags []string, db *gorm.DB) error {
 			TagID   int
 			TagName string
 		}
-		query := `SELECT tag_id FROM tags WHERE tag_name = ?`
+		query := `SELECT id AS tag_id FROM tags WHERE name = ?`
 		err := db.Raw(query, tag).Scan(&existingTag).Error
 		if err != nil && err != gorm.ErrRecordNotFound {
 			return err
 		}
 		if existingTag.TagID == 0 {
-			query := `INSERT INTO tags (tag_name) VALUES (?) RETURNING tag_id`
+			query := `INSERT INTO tags (name) VALUES (?) RETURNING id AS tag_id`
 			err := db.Raw(query, tag).Scan(&existingTag).Error
 			if err != nil {
 				return err
