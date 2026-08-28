@@ -14,7 +14,7 @@ const password = ref('')
 
 watch([email, password], () => {
   if (authStore.errorCode || authStore.errorDetails) {
-    Object.assign(authStore, { errorCode: null, errorDetails: null })
+    authStore.clearErrors()
   }
 })
 
@@ -44,7 +44,7 @@ const handleSubmit = async () => {
       </div>
 
       <div v-if="authStore.errorCode" class="error-message">
-        {{ $t(`api.${authStore.errorCode}`, authStore.errorDetails || {}) }}
+        {{ $t(`errors.${authStore.errorCode}`, authStore.errorDetails || {}) }}
       </div>
 
       <form @submit.prevent="handleSubmit" class="form">

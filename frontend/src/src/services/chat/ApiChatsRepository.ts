@@ -125,13 +125,15 @@ export class ApiChatsRepository implements IChatsRepository {
           }
         })()
 
-        // Same exact (status, code) matching as the axios interceptor in
-        // http.ts — a bare 401/403 without the specific code must not be
-        // treated as an expired/invalid session (see http.ts for why).
-        if (response.status === 403 && errorCode === 'TOKEN_INVALID') {
-          useAuthStore().notifyInvalidSession()
-        } else if (response.status === 401 && errorCode === 'TOKEN_EXPIRED') {
-          useAuthStore().notifySessionExpired()
+        // Same code-based matching as the axios interceptor in http.ts — a
+        // rejected token always comes back as 401, and the error code (not
+        // the status) decides which recovery flow applies (see http.ts).
+        if (response.status === 401) {
+          if (errorCode === 'TOKEN_INVALID') {
+            useAuthStore().notifyInvalidSession()
+          } else if (errorCode === 'TOKEN_EXPIRED') {
+            useAuthStore().notifySessionExpired()
+          }
         }
 
         return {

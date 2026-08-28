@@ -58,11 +58,12 @@ func AuthMiddleware(validator TokenValidator) func(http.Handler) http.Handler {
 				case errors.Is(err, upstream.ErrTokenExpired):
 					writeAuthError(w, http.StatusUnauthorized, "TOKEN_EXPIRED", "Token expired, please log in again")
 				case errors.Is(err, upstream.ErrTokenInvalid):
-					// 403, not 401: distinguishes "this credential was never
-					// valid" from an ordinary expiry so the client can react
-					// differently (e.g. wipe local auth state instead of
-					// just prompting to re-authenticate).
-					writeAuthError(w, http.StatusForbidden, "TOKEN_INVALID", "Token is invalid")
+					// Always 401, not 403: this is an authentication failure
+					// (who you are couldn't be verified), not an authorization
+					// one (access to a resource you're forbidden from). The
+					// client tells "never valid" apart from "expired" via the
+					// error code, not the status.
+					writeAuthError(w, http.StatusUnauthorized, "TOKEN_INVALID", "Token is invalid")
 				default:
 					writeAuthError(w, http.StatusUnauthorized, "TOKEN_INVALID", "Invalid or expired token")
 				}

@@ -28,16 +28,18 @@ http.interceptors.response.use(
     const status: number | undefined = err.response?.status
     const backendErrorCode: string | undefined = err.response?.data?.error?.code
 
-    // Only react to the exact (status, code) pairs the backend uses for a
-    // token that was actually sent and rejected. A 401 without TOKEN_EXPIRED
-    // (e.g. TOKEN_MISSING, or a guest endpoint that just requires auth) must
-    // not be treated as "your session expired" — that's a different, expected
-    // case and popping the modal for it is a false positive.
-    if (!isPublicAuthCall) {
-      if (status === 403 && backendErrorCode === 'TOKEN_INVALID') {
+    // The gateway's AuthMiddleware always answers a rejected token with 401
+    // (auth failure, not authorization) — the error CODE, not the status,
+    // is what tells an ordinary expiry apart from a token that was never
+    // legitimately issued. A bare 401 with neither code (e.g. TOKEN_MISSING,
+    // or a guest endpoint that just requires auth) must not be treated as
+    // "your session expired" — that's a different, expected case and
+    // popping a modal for it is a false positive.
+    if (!isPublicAuthCall && status === 401) {
+      if (backendErrorCode === 'TOKEN_INVALID') {
         // Token was never legitimately issued (hand-edited, bad signature).
         useAuthStore().notifyInvalidSession()
-      } else if (status === 401 && backendErrorCode === 'TOKEN_EXPIRED') {
+      } else if (backendErrorCode === 'TOKEN_EXPIRED') {
         useAuthStore().notifySessionExpired()
       }
     }

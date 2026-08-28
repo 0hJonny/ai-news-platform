@@ -9,6 +9,13 @@ export const useAuthStore = defineStore('auth', () => {
   const token = ref<string | null>(localStorage.getItem('token'))
   const user = ref<undefined | null>(null)
 
+  // Whether the current/last identity was a guest (anonymous login) rather
+  // than a real registered account. Unlike token, this survives
+  // notifySessionExpired/notifyInvalidSession on purpose — those clear the
+  // token but the modals still need to know whether to offer "log back in"
+  // (real account) or just mint a fresh guest session (was already a guest).
+  const isGuest = ref<boolean>(localStorage.getItem('isGuest') !== 'false')
+
   const errorCode = ref<string | null>(null)
   const errorDetails = ref<Record<string, unknown> | null>(null)
   const isLoading = ref(false)
@@ -21,14 +28,16 @@ export const useAuthStore = defineStore('auth', () => {
 
   const isAuthenticated = computed(() => !!token.value)
 
-  const _clearErrors = () => {
+  const clearErrors = () => {
     errorCode.value = null
     errorDetails.value = null
   }
 
-  const _handleSuccess = (newToken: string) => {
+  const _handleSuccess = (newToken: string, guest: boolean) => {
     token.value = newToken
     localStorage.setItem('token', newToken)
+    isGuest.value = guest
+    localStorage.setItem('isGuest', String(guest))
     // A fresh, legitimate token means whatever put us into either of the
     // "no longer trust the old token" states has been resolved.
     sessionExpired.value = false
@@ -45,39 +54,39 @@ export const useAuthStore = defineStore('auth', () => {
 
   const login = async (credentials: AuthRequest) => {
     isLoading.value = true
-    _clearErrors()
+    clearErrors()
 
     const result = await repo.login(credentials)
     isLoading.value = false
 
     if (result.success) {
-      return _handleSuccess(result.data.token)
+      return _handleSuccess(result.data.token, false)
     }
     return _handleError(result.error)
   }
 
   const register = async (credentials: AuthRequest) => {
     isLoading.value = true
-    _clearErrors()
+    clearErrors()
 
     const result = await repo.register(credentials)
     isLoading.value = false
 
     if (result.success) {
-      return _handleSuccess(result.data.token)
+      return _handleSuccess(result.data.token, false)
     }
     return _handleError(result.error)
   }
 
   const anonymousLogin = async () => {
     isLoading.value = true
-    _clearErrors()
+    clearErrors()
 
     const result = await repo.anonymousLogin()
     isLoading.value = false
 
     if (result.success) {
-      return _handleSuccess(result.data.token)
+      return _handleSuccess(result.data.token, true)
     }
     return _handleError(result.error)
   }
@@ -91,7 +100,9 @@ export const useAuthStore = defineStore('auth', () => {
   const $reset = () => {
     token.value = null
     user.value = null
-    _clearErrors()
+    isGuest.value = true
+    localStorage.removeItem('isGuest')
+    clearErrors()
     isLoading.value = false
     sessionExpired.value = false
     invalidSession.value = false
@@ -131,6 +142,7 @@ export const useAuthStore = defineStore('auth', () => {
   return {
     token,
     user,
+    isGuest,
     errorCode,
     errorDetails,
     isLoading,
@@ -144,6 +156,7 @@ export const useAuthStore = defineStore('auth', () => {
     notifySessionExpired,
     notifyInvalidSession,
     dismissSessionExpired,
+    clearErrors,
     $reset,
   }
 })

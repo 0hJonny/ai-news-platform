@@ -49,11 +49,16 @@ watch(
   { immediate: true },
 )
 
-// Auto-scroll when new messages/response chunks arrive
+// Auto-scroll when new messages arrive or the last message grows (streamed
+// tokens/steps) — tracked as a scalar so we don't deep-diff the whole
+// message history on every chunk of the LLM response.
 watch(
-  () => chatStore.activeChatMessages,
+  () => {
+    const msgs = chatStore.activeChatMessages
+    const last = msgs[msgs.length - 1]
+    return `${msgs.length}:${last?.content.length ?? 0}:${last?.steps.length ?? 0}`
+  },
   () => scrollToBottom(),
-  { deep: true },
 )
 
 onMounted(() => {

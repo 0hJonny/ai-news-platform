@@ -63,7 +63,7 @@ watch(locale, () => {
 <template>
   <div class="search-bar" :class="{ 'search-bar--focused': isFocused }">
     <div class="search-bar__input-wrapper">
-      <div v-for="(tag, index) in searchTags" :key="index" class="search-bar__tag">
+      <div v-for="(tag, index) in searchTags" :key="tag" class="search-bar__tag">
         <ArticleTag :tag="tag.replace('#', '')" @click="removeTag(index)" />
       </div>
 

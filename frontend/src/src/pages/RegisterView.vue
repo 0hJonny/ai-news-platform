@@ -31,22 +31,27 @@ const isPasswordMatch = computed(
   () => confirmPassword.value.length > 0 && confirmPassword.value === password.value,
 )
 
+// Purely client-side validation errors (never touch the backend), kept
+// separate from authStore.errorCode which is reserved for server responses.
+const localErrorCode = ref<string | null>(null)
+const displayErrorCode = computed(() => localErrorCode.value || authStore.errorCode)
+
 watch([name, email, password, confirmPassword], () => {
+  localErrorCode.value = null
   if (authStore.errorCode) {
-    authStore.errorCode = null
-    authStore.errorDetails = null
+    authStore.clearErrors()
   }
 })
 
 const handleSubmit = async () => {
+  localErrorCode.value = null
+
   if (isPasswordTouched.value && !isPasswordValid.value) {
-    authStore.errorCode = 'VALIDATION_PASSWORD_INVALID'
-    authStore.errorDetails = null
+    localErrorCode.value = 'VALIDATION_PASSWORD_INVALID'
     return
   }
   if (confirmPassword.value.length > 0 && !isPasswordMatch.value) {
-    authStore.errorCode = 'VALIDATION_PASSWORDS_MISMATCH'
-    authStore.errorDetails = null
+    localErrorCode.value = 'VALIDATION_PASSWORDS_MISMATCH'
     return
   }
 
@@ -68,8 +73,8 @@ const handleSubmit = async () => {
         <p class="subtitle">{{ $t('register.subtitle') }}</p>
       </div>
 
-      <div v-if="authStore.errorCode" class="error-message">
-        {{ $t(`errors.${authStore.errorCode}`, authStore.errorDetails || {}) }}
+      <div v-if="displayErrorCode" class="error-message">
+        {{ $t(`errors.${displayErrorCode}`, authStore.errorDetails || {}) }}
       </div>
 
       <form @submit.prevent="handleSubmit" class="form">

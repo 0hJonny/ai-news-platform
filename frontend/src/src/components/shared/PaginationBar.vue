@@ -121,7 +121,7 @@ const nextPage = () => {
       <div class="pagination__pages">
         <button
           v-for="(page, index) in visiblePages"
-          :key="index"
+          :key="typeof page === 'number' ? page : `dots-${index}`"
           @click="changePage(page)"
           :disabled="page === '...' || page === currentPage || loading"
           class="pagination__page"

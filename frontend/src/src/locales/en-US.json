@@ -143,7 +143,9 @@
   "invalidSession": {
     "title": "Something went wrong",
     "subtitle": "Your credentials are invalid. Start a new guest session to continue.",
+    "subtitleAccount": "Your account session is broken. Log in again to restore access.",
     "action": "Start over",
+    "loginAction": "Log in",
     "recovering": "Please wait..."
   },
   "validation": {
