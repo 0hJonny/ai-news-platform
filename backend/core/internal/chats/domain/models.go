@@ -30,11 +30,11 @@ const (
 // Chat session entity (thread)
 type Session struct {
 	CreatedAt time.Time  `json:"created_at"`
-    UpdatedAt time.Time  `json:"updated_at"`
-    DeletedAt *time.Time `json:"deleted_at"`
-    ID        string     `json:"id"`
-    UserID    string     `json:"user_id"`
-    Title     string     `json:"title"`
+	UpdatedAt time.Time  `json:"updated_at"`
+	DeletedAt *time.Time `json:"deleted_at"`
+	ID        string     `json:"id"`
+	UserID    string     `json:"user_id"`
+	Title     string     `json:"title"`
 }
 
 type MessageMeta struct {
@@ -46,7 +46,7 @@ type MessageMeta struct {
 }
 
 type Message struct {
-	CreatedAt time.Time	  `json:"created_at"`
+	CreatedAt time.Time   `json:"created_at"`
 	ParentID  *string     `json:"parent_id,omitempty"`
 	TraceID   *string     `json:"trace_id,omitempty"`
 	ID        string      `json:"id"`

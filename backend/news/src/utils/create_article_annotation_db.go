@@ -54,11 +54,23 @@ func CreateArticleAnnotationDB(articleData *models.ArticleAnnotation) (models.Ar
 		}
 	}
 
+	// status_id is explicit (not left to the column default of PENDING) —
+	// this flow inserts a row with the annotation text already in hand, so
+	// it's done by definition; see models.AnnotationStatusAnnotated.
+	annotatedStatusID, err := resolveAnnotationStatusID(tx, models.AnnotationStatusAnnotated)
+	if err != nil {
+		tx.Rollback()
+		return models.ArticleAnnotation{}, err
+	}
+
 	query = `
-		INSERT INTO annotations (article_id, annotation, language_id, neural_network)
-		VALUES (?, ?, ?, ?)
+		INSERT INTO annotations (article_id, annotation, language_id, neural_network, status_id)
+		VALUES (?, ?, ?, ?, ?)
 	`
-	err = tx.Exec(query, articleData.ID, articleData.Annotation, language.ID, articleData.NeuralNetworks["annotator"]).Error
+	err = tx.Exec(
+		query, articleData.ID, articleData.Annotation, language.ID,
+		articleData.NeuralNetworks["annotator"], annotatedStatusID,
+	).Error
 	if err != nil {
 		tx.Rollback()
 		return models.ArticleAnnotation{}, err

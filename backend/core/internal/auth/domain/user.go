@@ -46,15 +46,15 @@ func loginRulesPath() string {
 
 type loginRulesSpec struct {
 	Pattern     string `json:"pattern"`
+	Description string `json:"description"`
 	MinLength   int    `json:"minLength"`
 	MaxLength   int    `json:"maxLength"`
-	Description string `json:"description"`
 }
 
 var loginRules = func() loginRulesSpec {
 	path := loginRulesPath()
 
-	raw, err := os.ReadFile(path)
+	raw, err := os.ReadFile(path) //nolint:gosec // G304: path is LOGIN_RULES_PATH (operator-set env var, fixed in docker-compose.yml) or the hardcoded default above — never derived from request input.
 	if err != nil {
 		panic(fmt.Sprintf(
 			"domain: failed to read login rules at %q (set LOGIN_RULES_PATH if the process isn't started from the backend/core module root): %v",

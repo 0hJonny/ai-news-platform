@@ -13,10 +13,10 @@ func GetAnnotationQueue(c *gin.Context) {
 	articleQueue, err := utils.GetAnnotationQueue()
 
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"status": "failed", "message": "Unable to get articles", "data": nil})
+		respondError(c, http.StatusBadRequest, msgUnableToGetArticles)
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{"status": "success", "message": "Articles fetched successfully", "data": articleQueue})
+	respondData(c, http.StatusOK, statusSuccess, msgArticlesFetched, articleQueue)
 }
 
 func GetArticleByID(c *gin.Context) {
@@ -24,17 +24,17 @@ func GetArticleByID(c *gin.Context) {
 	var articleData models.ArticleAnnotation
 	id := c.Param("id")
 	if id == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"status": "failed", "message": "Missing id in url", "data": nil})
+		respondError(c, http.StatusBadRequest, msgMissingID)
 		return
 	}
 	articleData.ID = id
 
 	articleData, err = utils.GetArticleByID(&articleData)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"status": "failed", "message": "Unable to get article", "data": nil})
+		respondError(c, http.StatusBadRequest, msgUnableToGetArticle)
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{"status": "success", "message": "Article fetched successfully", "data": articleData})
+	respondData(c, http.StatusOK, statusSuccess, msgArticleFetched, articleData)
 }
 
 func CreateArticleAnnotation(c *gin.Context) {
@@ -42,14 +42,14 @@ func CreateArticleAnnotation(c *gin.Context) {
 	var articleData models.ArticleAnnotation
 	err = c.ShouldBindJSON(&articleData)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"status": "failed", "message": "Invalid request payload", "data": nil})
+		respondError(c, http.StatusBadRequest, msgInvalidPayload)
 		return
 	}
 
 	articleData, err = utils.CreateArticleAnnotationDB(&articleData)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"status": "failed", "message": err, "data": nil})
+		respondError(c, http.StatusBadRequest, err.Error())
 		return
 	}
-	c.JSON(http.StatusCreated, gin.H{"status": "success", "message": "Article created successfully", "data": articleData})
+	respondData(c, http.StatusCreated, statusSuccess, msgArticleCreated, articleData)
 }

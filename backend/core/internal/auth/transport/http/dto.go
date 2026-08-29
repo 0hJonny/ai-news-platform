@@ -16,8 +16,8 @@ type LoginAvailabilityResponse struct {
 // false — omitted from the JSON body entirely when there's nothing to
 // suggest.
 type CheckUsernameResponse struct {
-	Available   bool     `json:"available"`
 	Suggestions []string `json:"suggestions,omitempty"`
+	Available   bool     `json:"available"`
 }
 
 type TokenResponse struct {

@@ -11,7 +11,7 @@ class BaseParser:
         self.browsers = ['chrome', 'firefox']
         self.scraper = cloudscraper.create_scraper(
             delay=6, 
-            browser={"browser": random.choice(self.browsers), "device": random.choice(self.platforms)}
+            browser={"browser": random.choice(self.browsers), "platform": random.choice(self.platforms)}
         )
         
         self.api_user_login: str = os.getenv("API_USER_LOGIN")

@@ -9,6 +9,7 @@ volumes:
   chroma_data:
   minio_data:
   pgadmin_data:
+  redis_data:
 
 services:
   # =========================================================================
@@ -44,6 +45,29 @@ services:
       - "8001:8000"
     volumes:
       - chroma_data:/chroma/chroma
+    healthcheck:
+      # Neither curl nor python3 exist in this image — Chroma's core is a
+      # compiled Rust binary now (see ASAN_OPTIONS/RUST_BACKTRACE in the
+      # container env, entrypoint is just dumb-init + the chroma binary).
+      # It IS a Debian base with the usual coreutils/perl though (confirmed
+      # via `ls /usr/bin` inside the container), so use perl's core
+      # IO::Socket::INET — no extra modules needed — to open a raw socket
+      # and check for an HTTP 200. /api/v2/heartbeat is the right endpoint,
+      # verified via curl from the host: /api/v1/heartbeat now 410s ("v1
+      # API is deprecated"). Every literal $ below is doubled ($$) — Compose
+      # interpolates $VAR in any compose-file string regardless of YAML
+      # quoting, so an unescaped $s/$r/$/ silently becomes blank instead of
+      # reaching Perl (learned this the hard way: "my  = IO::Socket...").
+      test:
+        - CMD
+        - perl
+        - -MIO::Socket::INET
+        - -e
+        - 'my $$s = IO::Socket::INET->new(PeerAddr => "localhost", PeerPort => 8000, Timeout => 3) or exit 1; print $$s "GET /api/v2/heartbeat HTTP/1.0\r\nHost: localhost\r\n\r\n"; my $$r = do { local $$/; <$$s> }; exit($$r =~ /^HTTP\/1\.[01] 200/ ? 0 : 1);'
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
     networks:
       - platform-network
 
@@ -59,6 +83,29 @@ services:
       - "9001:9001"
     volumes:
       - minio_data:/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    networks:
+      - platform-network
+
+  # Broker for the Stage 4 Celery pipeline (workers/shared/celery_app.py) —
+  # parsing_queue / annotation_queue live here.
+  redis:
+    image: redis:7-alpine
+    container_name: platform-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
     networks:
       - platform-network
 
@@ -123,7 +170,15 @@ services:
       PORT: "8081"
       GRPC_PORT: "50051"
       LOGIN_RULES_PATH: /shared/auth/login-rules.json
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8081/health"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 45s
     depends_on:
+      postgres:
+        condition: service_healthy
       migrate:
         condition: service_completed_successfully
     networks:
@@ -141,7 +196,15 @@ services:
     environment:
       DATABASE_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}?sslmode=disable
       PORT: "8082"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8082/health"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
     depends_on:
+      postgres:
+        condition: service_healthy
       migrate:
         condition: service_completed_successfully
     networks:
@@ -166,11 +229,21 @@ services:
       ALLOWED_ORIGINS: ${ALLOWED_ORIGINS}
     ports:
       - "8080:8080"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
     depends_on:
-      - auth
-      - chats
-      - agent
-      - news
+      auth:
+        condition: service_healthy
+      chats:
+        condition: service_healthy
+      agent:
+        condition: service_healthy
+      news:
+        condition: service_healthy
     networks:
       - platform-network
 
@@ -197,11 +270,19 @@ services:
       MINIO_PASSWORD: ${MINIO_PASSWORD}
       MINIO_HOST: minio
       MINIO_PORT: "9000"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 45s
     depends_on:
+      postgres:
+        condition: service_healthy
       migrate:
         condition: service_completed_successfully
       minio:
-        condition: service_started
+        condition: service_healthy
     networks:
       - platform-network
 
@@ -232,11 +313,17 @@ services:
       LANGFUSE_HOST: ${LANGFUSE_HOST}
       CORS_ORIGINS: ${ALLOWED_ORIGINS}
       GO_CHAT_SERVICE: "http://chats:8082/api/v1"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
     depends_on:
       postgres:
         condition: service_healthy
       chromadb:
-        condition: service_started
+        condition: service_healthy
     networks:
       - platform-network
 
@@ -255,12 +342,21 @@ services:
     container_name: platform-parser
     volumes:
       - ../workers/parser:/app
+      # Shared Celery app/queue config (workers/shared/celery_app.py),
+      # imported as `from shared.celery_app import app` — same
+      # mount-a-sibling-dir-in pattern already used for backend/core's
+      # login-rules contract elsewhere in this file.
+      - ../workers/shared:/app/shared:ro
     environment:
       GOLANG_API: "http://news:5000/api/v1"
       API_USER_LOGIN: ${ADMIN_USERNAME}
       API_USER_PASSWORD: ${ADMIN_PASSWORD}
+      CELERY_BROKER_URL: redis://redis:6379/0
     depends_on:
-      - news
+      news:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
     networks:
       - platform-network
 
@@ -271,13 +367,18 @@ services:
     container_name: platform-annotation
     volumes:
       - ../workers/annotation:/app
+      - ../workers/shared:/app/shared:ro
     environment:
       GOLANG_API: "http://news:5000/api/v1"
       API_USER_LOGIN: ${ADMIN_USERNAME}
       API_USER_PASSWORD: ${ADMIN_PASSWORD}
       API_OLLAMA_URL: ${OLLAMA_BASE_URL}
+      CELERY_BROKER_URL: redis://redis:6379/0
     depends_on:
-      - news
+      news:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
     networks:
       - platform-network
 
@@ -303,6 +404,7 @@ services:
     ports:
       - "3001:3001"
     depends_on:
-      - gateway
+      gateway:
+        condition: service_healthy
     networks:
       - platform-network

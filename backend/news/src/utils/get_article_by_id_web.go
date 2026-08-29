@@ -38,14 +38,16 @@ func GetArticleDetailsWeb(article *models.ArticleWebQuery) (*models.ArticleWeb, 
 	LEFT JOIN
 		annotations ON articles.id = annotations.article_id AND annotations.language_id = lang.id
 	LEFT JOIN
+		annotation_statuses ans ON ans.id = annotations.status_id
+	LEFT JOIN
 		titles ON articles.id = titles.article_id AND titles.language_id = lang.id
 
-	WHERE annotations.article_id IS NOT NULL AND articles.id = ?
+	WHERE ans.code = ? AND articles.id = ?
 
 	GROUP BY articles.id, titles.title, themes.name, annotations.annotation, lang.code
 `
 
-	if err := models.DB.Raw(query, article.LanguageCode, article.ArticleID).Scan(&articleData).Error; err != nil {
+	if err := models.DB.Raw(query, article.LanguageCode, models.AnnotationStatusAnnotated, article.ArticleID).Scan(&articleData).Error; err != nil {
 		return &models.ArticleWeb{}, err
 	}
 

@@ -49,16 +49,23 @@ func GetArticleSearch(articleWebQuery *models.ArticleWebQuery) (*[]models.Articl
 		LEFT JOIN
 			annotations ON articles.id = annotations.article_id AND annotations.language_id = lang.id
 		LEFT JOIN
+			annotation_statuses ans ON ans.id = annotations.status_id
+		LEFT JOIN
 			titles ON articles.id = titles.article_id AND titles.language_id = lang.id
 	`
 
 	args := []interface{}{articleWebQuery.LanguageCode}
 
+	// Sprintf, not a bind param, on purpose: this file already has a
+	// hand-numbered $2 further down (in the content-match OR clause) —
+	// inserting a new ? here would shift every later positional arg out
+	// from under it. models.AnnotationStatusAnnotated is a fixed internal
+	// constant, never request input, so this isn't an injection risk.
 	if articleWebQuery.Category != "" {
-		query += ` WHERE themes.name = ? AND annotations.article_id IS NOT NULL`
+		query += fmt.Sprintf(` WHERE themes.name = ? AND ans.code = '%s'`, models.AnnotationStatusAnnotated)
 		args = append(args, articleWebQuery.Category)
 	} else {
-		query += ` WHERE annotations.article_id IS NOT NULL`
+		query += fmt.Sprintf(` WHERE ans.code = '%s'`, models.AnnotationStatusAnnotated)
 	}
 
 	if content != "" {

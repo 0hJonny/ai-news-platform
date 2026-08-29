@@ -177,8 +177,8 @@ func (s *AuthServiceImpl) CheckLoginAvailable(ctx context.Context, login string)
 // handle is free, and — only when it isn't — a handful of alternatives
 // that were each individually verified against the database.
 type UsernameCheckResult struct {
-	Available   bool
 	Suggestions []string
+	Available   bool
 }
 
 const suggestionCount = 3
@@ -198,17 +198,19 @@ var wordSuggestionSuffixes = []string{"_ai", "_dev", "_pro", "_hq"}
 // randomSuggestionSuffix picks a suffix for the given attempt index —
 // two-digit numbers first (matches the frontend's own heuristic), then
 // three-digit, then a couple of word suffixes, then wider random numbers
-// for any attempts beyond that.
+// for any attempts beyond that. math/rand, not crypto/rand, on purpose:
+// this only picks cosmetic username suggestions, nothing security-sensitive
+// (not a token, not a credential) — predictability here has no impact.
 func randomSuggestionSuffix(attempt int) string {
 	switch {
 	case attempt < 2:
-		return strconv.Itoa(10 + rand.Intn(90))
+		return strconv.Itoa(10 + rand.Intn(90)) //nolint:gosec // G404: cosmetic suggestion, not security-sensitive
 	case attempt < 4:
-		return strconv.Itoa(100 + rand.Intn(900))
+		return strconv.Itoa(100 + rand.Intn(900)) //nolint:gosec // G404: cosmetic suggestion, not security-sensitive
 	case attempt < 4+len(wordSuggestionSuffixes):
 		return wordSuggestionSuffixes[attempt-4]
 	default:
-		return strconv.Itoa(rand.Intn(10000))
+		return strconv.Itoa(rand.Intn(10000)) //nolint:gosec // G404: cosmetic suggestion, not security-sensitive
 	}
 }
 

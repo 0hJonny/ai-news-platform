@@ -32,16 +32,19 @@ func GetArticleWeb(articleWebQuery *models.ArticleWebQuery) (*[]models.ArticleWe
 		LEFT JOIN
 			annotations ON articles.id = annotations.article_id AND annotations.language_id = lang.id
 		LEFT JOIN
+			annotation_statuses ans ON ans.id = annotations.status_id
+		LEFT JOIN
 			titles ON articles.id = titles.article_id AND titles.language_id = lang.id
 	`
 
 	args := []interface{}{articleWebQuery.LanguageCode}
 
 	if articleWebQuery.Category != "" {
-		query += ` WHERE themes.name = ? AND annotations.article_id IS NOT NULL`
-		args = append(args, articleWebQuery.Category)
+		query += ` WHERE themes.name = ? AND ans.code = ?`
+		args = append(args, articleWebQuery.Category, models.AnnotationStatusAnnotated)
 	} else {
-		query += ` WHERE annotations.article_id IS NOT NULL`
+		query += ` WHERE ans.code = ?`
+		args = append(args, models.AnnotationStatusAnnotated)
 	}
 
 	query += `

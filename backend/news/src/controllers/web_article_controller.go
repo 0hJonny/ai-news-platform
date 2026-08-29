@@ -13,15 +13,15 @@ func GetAnnotation(c *gin.Context) {
 	var article models.ArticleWebQuery
 	err = c.ShouldBindQuery(&article)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"status": "failed", "message": "Invalid request payload", "data": nil})
+		respondError(c, http.StatusBadRequest, msgInvalidPayload)
 		return
 	}
 	articles, err := utils.GetArticleWeb(&article)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"status": "failed", "message": "Unable to get articles", "data": nil})
+		respondError(c, http.StatusBadRequest, msgUnableToGetArticles)
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{"status": "success", "message": "Articles fetched successfully", "data": articles})
+	respondData(c, http.StatusOK, statusSuccess, msgArticlesFetched, articles)
 }
 
 func GetArticleWebCount(c *gin.Context) {
@@ -29,15 +29,15 @@ func GetArticleWebCount(c *gin.Context) {
 	var article models.ArticleWebQuery
 	err = c.ShouldBindQuery(&article)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"status": "failed", "message": "Invalid request payload", "data": nil})
+		respondError(c, http.StatusBadRequest, msgInvalidPayload)
 		return
 	}
 	count, err := utils.GetArticleWebCount(&article)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"status": "failed", "message": "Unable to get articles", "data": nil})
+		respondError(c, http.StatusBadRequest, msgUnableToGetArticles)
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{"status": "success", "message": "Articles fetched successfully", "data": count})
+	respondData(c, http.StatusOK, statusSuccess, msgArticlesFetched, count)
 }
 
 func GetArticleDetails(c *gin.Context) {
@@ -45,16 +45,16 @@ func GetArticleDetails(c *gin.Context) {
 	var article models.ArticleWebQuery
 	err = c.ShouldBindQuery(&article)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"status": "failed", "message": "Invalid request payload", "data": nil})
+		respondError(c, http.StatusBadRequest, msgInvalidPayload)
 		return
 	}
 	articleDetails, err := utils.GetArticleDetailsWeb(&article)
 
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"status": "failed", "message": "Unable to get articles", "data": nil})
+		respondError(c, http.StatusBadRequest, msgUnableToGetArticles)
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{"status": "success", "message": "Articles fetched successfully", "data": articleDetails})
+	respondData(c, http.StatusOK, statusSuccess, msgArticlesFetched, articleDetails)
 }
 
 func GetArticleSearch(c *gin.Context) {
@@ -62,16 +62,14 @@ func GetArticleSearch(c *gin.Context) {
 	var article models.ArticleWebQuery
 	err = c.ShouldBindQuery(&article)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"status": "failed", "message": "Invalid request payload", "data": nil})
+		respondError(c, http.StatusBadRequest, msgInvalidPayload)
 		return
 	}
 	articles, err := utils.GetArticleSearch(&article)
 
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"status": "failed", "message": "Unable to get articles", "data": nil})
+		respondError(c, http.StatusBadRequest, msgUnableToGetArticles)
 		return
 	}
-	// c.JSON(http.StatusOK, gin.H{"status": "success", "message": "Articles fetched successfully", "data": articleDetails})
-	c.JSON(http.StatusOK, gin.H{"status": "success", "message": "Articles fetched successfully", "data": articles})
-
+	respondData(c, http.StatusOK, statusSuccess, msgArticlesFetched, articles)
 }

@@ -5,8 +5,13 @@ from models import ArticleAnnotation
 
 
 class ArticleService:
-    # api_ollama_url: str = os.getenv("API_OLLAMA_URL")
-    api_ollama_url: str = "https://stammer-unworn-glider.ngrok-free.dev"
+    # docker-compose reuses OLLAMA_BASE_URL for API_OLLAMA_URL, but that
+    # value is "/v1"-suffixed for the LangGraph agent's OpenAI-compatible
+    # client (workers/agent) — GenerationModel._generate_text posts to
+    # Ollama's native "{api_url}/api/chat" instead, so a trailing "/v1"
+    # would double up into ".../v1/api/chat" and 404. Strip it defensively
+    # rather than requiring a second, annotation-only env var.
+    api_ollama_url: str = os.getenv("API_OLLAMA_URL", "http://localhost:11434").removesuffix("/v1")
 
     @classmethod
     def _set_api_url(cls, model: GenerationModel) -> None:
