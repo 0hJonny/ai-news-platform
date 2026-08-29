@@ -125,8 +125,18 @@ func (s *AuthServiceImpl) CreateAnonymous(ctx context.Context) (Token, error) {
 	return s.generateToken(user.ID, user.Role)
 }
 
-func (s *AuthServiceImpl) Login(ctx context.Context, email, password string) (Token, error) {
-	user, err := s.repo.GetUserByEmail(ctx, email)
+// Login accepts either an email or a login/username as identifier and
+// looks the user up by whichever format it matches.
+func (s *AuthServiceImpl) Login(ctx context.Context, identifier, password string) (Token, error) {
+	normalized := strings.ToLower(strings.TrimSpace(identifier))
+
+	var user domain.User
+	var err error
+	if domain.ValidEmailFormat(normalized) {
+		user, err = s.repo.GetUserByEmail(ctx, normalized)
+	} else {
+		user, err = s.repo.GetUserByLogin(ctx, normalized)
+	}
 	if err != nil {
 		return Token{}, domain.ErrInvalidCreds
 	}

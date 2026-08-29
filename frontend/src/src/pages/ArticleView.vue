@@ -50,7 +50,11 @@ const goBack = () => {
     <div class="article-view__container">
       <!-- Back button -->
       <button @click="goBack" class="article-view__back-button">
-        <img src="/arrow-left.svg" alt="back" class="w-5 h-5 invert dark:invert-0" />
+        <img
+          src="/arrow-left.svg"
+          :alt="$t('article.backAlt')"
+          class="w-5 h-5 invert dark:invert-0"
+        />
         <span>{{ $t('article.back') }}</span>
       </button>
 

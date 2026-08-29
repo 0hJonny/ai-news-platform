@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 
+const { t } = useI18n()
 const isDark = ref(false)
 
 const switchTheme = () => {
@@ -31,11 +33,11 @@ onMounted(() => {
       @click="switchTheme"
       class="theme-switcher group"
       :class="{ 'dark-mode': isDark }"
-      aria-label="Toggle theme"
+      :aria-label="t('theme.toggleAria')"
     >
       <div class="switch-thumb" />
-      <img class="icon" src="/moon.svg" alt="Dark mode" />
-      <img class="icon" src="/sun.svg" alt="Light mode" />
+      <img class="icon" src="/moon.svg" :alt="t('theme.darkAlt')" />
+      <img class="icon" src="/sun.svg" :alt="t('theme.lightAlt')" />
     </button>
   </div>
 </template>

@@ -43,6 +43,8 @@
       "title": "Error"
     },
     "back": "Back",
+    "backAlt": "Back",
+    "tagsAriaLabel": "Article tags",
     "notFound": "Article not found",
     "goBack": "Go back",
     "loading": "Loading...",
@@ -96,7 +98,7 @@
   "login": {
     "title": "Sign In",
     "subtitle": "Enter your credentials to continue",
-    "email_placeholder": "Email address",
+    "identifier_placeholder": "Email or username",
     "password_placeholder": "Password",
     "forgot_password": "Forgot password?",
     "submit": "Sign In",
@@ -124,7 +126,50 @@
       "synthesize": "Synthesizing",
       "fact_check": "Fact checking",
       "finalize": "Finalizing response"
+    },
+    "input": {
+      "placeholder": "Type your question..."
+    },
+    "message": {
+      "copy": "Copy",
+      "like": "Good response",
+      "dislike": "Bad response",
+      "regenerate": "Regenerate"
+    },
+    "sidebar": {
+      "confirmDelete": "Delete this chat? This action cannot be undone.",
+      "openMenu": "Open menu",
+      "hidePanel": "Hide panel",
+      "showPanel": "Show panel",
+      "newChat": "New chat",
+      "createChat": "Create chat",
+      "recent": "Recent",
+      "noChats": "No active chats",
+      "rename": "Rename",
+      "delete": "Delete"
+    },
+    "home": {
+      "heading": "How can I help you?",
+      "placeholder": "Type your query...",
+      "inputAriaLabel": "Query to AI",
+      "sendAriaLabel": "Send query",
+      "quickPromptsAriaLabel": "Quick prompts",
+      "quickPrompts": [
+        "Why do we need large language models?",
+        "Popular web development frameworks",
+        "Python vs Go in 2024"
+      ]
     }
+  },
+  "theme": {
+    "toggleAria": "Toggle theme",
+    "darkAlt": "Dark mode",
+    "lightAlt": "Light mode",
+    "switchToLight": "Switch to light theme",
+    "switchToDark": "Switch to dark theme"
+  },
+  "language": {
+    "selectAriaLabel": "Select language"
   },
   "register": {
     "title": "Create an account",
@@ -142,6 +187,18 @@
     "loading": "Creating account...",
     "already_have_account": "Already have an account?",
     "privacy": "Privacy Policy",
+    "loginRulesAriaLabel": "Login requirements",
+    "passwordRulesAriaLabel": "Password requirements",
+    "showPassword": "Show password",
+    "hidePassword": "Hide password",
+    "next": "Next",
+    "back": "Back",
+    "stepAriaLabel": "Step {current} of {total}",
+    "success": {
+      "title": "You have successfully registered!",
+      "subtitle": "Your account has been created. Welcome!",
+      "continue": "Go to homepage"
+    },
     "verification": {
       "title": "Confirm your email",
       "subtitle": "We sent a link to {target}. Follow it to finish creating your account.",
@@ -182,13 +239,13 @@
     "PASS_LOWERCASE": "Lowercase letter (a-z)",
     "PASS_NUMBER": "Digit (0-9)",
     "PASS_SPECIAL_CHAR": "Special character (!#&*%...)",
-    "LOGIN_LENGTH": "3 to 20 characters",
+    "LOGIN_LENGTH": "5 to 20 characters",
     "LOGIN_STARTS_WITH_LETTER": "Starts with a Latin letter",
     "LOGIN_CHARSET": "Latin letters, digits and _ only"
   },
   "errors": {
     "api": {
-      "AUTH_INVALID_CREDENTIALS": "Invalid email or password.",
+      "AUTH_INVALID_CREDENTIALS": "Invalid email/username or password.",
       "AUTH_ACCOUNT_NOT_FOUND": "Account not found.",
       "AUTH_ACCOUNT_LOCKED": "Account is locked. Please contact support.",
       "AUTH_TOO_MANY_ATTEMPTS": "Too many attempts. Try again in {minutes} min.",
@@ -204,5 +261,23 @@
     "VALIDATION_PASSWORDS_MISMATCH": "Passwords do not match.",
     "VALIDATION_LOGIN_INVALID": "Login must start with a letter and contain 3-20 Latin letters, digits, or _.",
     "VALIDATION_LOGIN_TAKEN": "This login is already taken, please choose another one."
+  },
+  "steps": {
+    "init": "Initializing...",
+    "classifying_intent": "Classifying your query...",
+    "intent_chitchat": "Preparing a quick response...",
+    "intent_rag": "Starting fact search...",
+    "local_search": "Searching the knowledge base...",
+    "local_found": "Found data in the local knowledge base.",
+    "local_not_found": "The local knowledge base is empty.",
+    "evaluating_context": "Evaluating gathered information...",
+    "reformulating_query": "Refining the search query...",
+    "web_search": "Searching the web...",
+    "web_found": "Found sources on the web.",
+    "web_not_found": "Web search returned no results.",
+    "synthesizing_draft": "Drafting a response...",
+    "fact_checking": "Fact-checking...",
+    "finalizing_response": "Response is ready.",
+    "error": "An error occurred while processing."
   }
 }

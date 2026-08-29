@@ -306,7 +306,7 @@ export const useChatStore = defineStore('chat', () => {
     const currentMsg = _getReactiveMessage(chatId, messageId)
     if (currentMsg) {
       const errorText = _getLocalizedError(error.code)
-      currentMsg.content += `\n\n⚠️ ${errorText}`
+      currentMsg.content += `\n\n⚠ ${errorText}`
     }
   }
 

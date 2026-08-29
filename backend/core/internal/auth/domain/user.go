@@ -12,6 +12,14 @@ import (
 
 var emailRegex = regexp.MustCompile(`^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$`)
 
+// ValidEmailFormat reports whether s matches emailRegex once
+// lowercased/trimmed. Exported so the service layer's login flow can tell
+// whether the identifier a user typed is an email or a login/username
+// without duplicating the pattern.
+func ValidEmailFormat(s string) bool {
+	return emailRegex.MatchString(strings.ToLower(strings.TrimSpace(s)))
+}
+
 // loginRulesPath resolves ai_news_platform/shared/auth/login-rules.json —
 // the single canonical copy of the login/username format contract. The
 // frontend reads this exact same file (frontend/src/vite.config.ts's

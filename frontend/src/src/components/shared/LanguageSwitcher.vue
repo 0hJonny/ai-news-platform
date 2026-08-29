@@ -1,8 +1,10 @@
 <script setup lang="ts">
 import { computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { useLocaleStore } from '@/stores/locale/locale'
 import { AVAILABLE_LOCALES, type LocaleCode } from '@/locales/locales'
 
+const { t } = useI18n()
 const localeStore = useLocaleStore()
 
 const selectedLocale = computed({
@@ -19,7 +21,7 @@ const getDisplayName = (code: LocaleCode) => {
 
 <template>
   <div class="language-switcher">
-    <select v-model="selectedLocale" aria-label="Select language">
+    <select v-model="selectedLocale" :aria-label="t('language.selectAriaLabel')">
       <option
         v-for="localeItem in AVAILABLE_LOCALES"
         :key="localeItem.code"

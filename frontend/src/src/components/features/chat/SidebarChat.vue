@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import { useChatStore } from '@/stores/chatStore/chatStore'
 import { useAuthStore } from '@/stores/authStore/authStore'
 import ThemeSwitcherCompact from '@/components/shared/ThemeSwitcherCompact.vue'
@@ -9,6 +10,7 @@ import UserMenu from '@/components/features/chat/UserMenu.vue'
 const chatStore = useChatStore()
 const authStore = useAuthStore()
 const router = useRouter()
+const { t } = useI18n()
 
 const isOpen = computed(() => chatStore.isSidebarOpen)
 
@@ -110,7 +112,7 @@ const cancelRename = () => {
 
 const handleDelete = async (chatId: string, event: Event) => {
   event.stopPropagation()
-  if (confirm('Удалить этот чат? Действие необратимо.')) {
+  if (confirm(t('chat.sidebar.confirmDelete'))) {
     const success = await chatStore.deleteChat(chatId)
     // If the deleted chat was the open one — redirect to the home screen (New chat)
     if (success && chatStore.activeChatId === null) {
@@ -129,7 +131,7 @@ const handleDelete = async (chatId: string, event: Event) => {
     v-show="!isOpen"
     class="mobile-toggle-btn"
     @click="toggleSidebar"
-    aria-label="Открыть меню"
+    :aria-label="t('chat.sidebar.openMenu')"
   >
     <svg
       width="24"
@@ -153,7 +155,7 @@ const handleDelete = async (chatId: string, event: Event) => {
         <button
           class="sidebar-toggle-btn"
           @click="toggleSidebar"
-          :aria-label="isOpen ? 'Скрыть панель' : 'Показать панель'"
+          :aria-label="isOpen ? t('chat.sidebar.hidePanel') : t('chat.sidebar.showPanel')"
         >
           <svg
             v-if="isOpen"
@@ -192,7 +194,7 @@ const handleDelete = async (chatId: string, event: Event) => {
         class="new-chat-btn"
         @click="handleNewChat"
         :disabled="authStore.isLoading || !authStore.isAuthenticated"
-        :aria-label="isOpen ? 'Новый чат' : 'Создать чат'"
+        :aria-label="isOpen ? t('chat.sidebar.newChat') : t('chat.sidebar.createChat')"
       >
         <svg
           width="20"
@@ -207,16 +209,18 @@ const handleDelete = async (chatId: string, event: Event) => {
           <line x1="12" y1="5" x2="12" y2="19"></line>
           <line x1="5" y1="12" x2="19" y2="12"></line>
         </svg>
-        <span class="btn-text" v-show="isOpen">Новый чат</span>
+        <span class="btn-text" v-show="isOpen">{{ t('chat.sidebar.newChat') }}</span>
       </button>
     </div>
 
     <div class="sidebar-content">
-      <div class="section-title" v-show="isOpen" v-if="chatStore.chats.length > 0">Недавние</div>
+      <div class="section-title" v-show="isOpen" v-if="chatStore.chats.length > 0">
+        {{ t('chat.sidebar.recent') }}
+      </div>
 
       <nav class="chat-list" role="list">
         <div v-if="chatStore.chats.length === 0" class="empty-state">
-          {{ isOpen ? 'Нет активных чатов' : '' }}
+          {{ isOpen ? t('chat.sidebar.noChats') : '' }}
         </div>
 
         <button
@@ -264,7 +268,7 @@ const handleDelete = async (chatId: string, event: Event) => {
               <div
                 class="action-btn"
                 @click="startRename(chat.id, chat.title, $event)"
-                title="Переименовать"
+                :title="t('chat.sidebar.rename')"
               >
                 <svg
                   viewBox="0 0 24 24"
@@ -280,7 +284,7 @@ const handleDelete = async (chatId: string, event: Event) => {
               <div
                 class="action-btn delete-btn"
                 @click="handleDelete(chat.id, $event)"
-                title="Удалить"
+                :title="t('chat.sidebar.delete')"
               >
                 <svg
                   viewBox="0 0 24 24"

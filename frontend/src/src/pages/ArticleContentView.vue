@@ -74,10 +74,27 @@ const hasBadges = computed(() => {
 
     <div v-else-if="error" class="container">
       <div class="error-container">
-        <div class="error-icon">⚠️</div>
+        <div class="error-icon">
+          <svg
+            width="64"
+            height="64"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <path
+              d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"
+            ></path>
+            <line x1="12" y1="9" x2="12" y2="13"></line>
+            <line x1="12" y1="17" x2="12.01" y2="17"></line>
+          </svg>
+        </div>
         <h2 class="error-title">{{ $t('article.error.title') }}</h2>
         <p class="error-message">{{ error }}</p>
-        <button class="error-btn" @click="$router.back()">Go back...</button>
+        <button class="error-btn" @click="$router.back()">{{ $t('article.goBack') }}</button>
       </div>
     </div>
 
@@ -668,7 +685,9 @@ const hasBadges = computed(() => {
   padding: var(--space-l);
 }
 .error-icon {
-  font-size: 64px;
+  display: flex;
+  justify-content: center;
+  color: #ef4444;
   margin-bottom: var(--space-m);
 }
 .error-title {

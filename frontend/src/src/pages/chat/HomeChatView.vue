@@ -1,26 +1,28 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import { useChatStore } from '@/stores/chatStore/chatStore'
 
 // Interface for the prompts, for strict typing
+type QuickPromptIcon = 'idea' | 'code' | 'terminal'
 interface QuickPrompt {
   id: string | number
-  icon: string
-  text: string
+  icon: QuickPromptIcon
 }
 
 const router = useRouter()
 const chatStore = useChatStore()
+const { t } = useI18n()
 
 const query = ref('')
 const isSubmitting = ref(false)
 
-// Move the data out of the template. Easy to replace with fetch() later
+// Icons only — translated text comes from chat.home.quickPrompts via index
 const quickPrompts: QuickPrompt[] = [
-  { id: 1, icon: '💡', text: 'Зачем нужны большие языковые модели?' },
-  { id: 2, icon: '💻', text: 'Популярные фреймворки для Веб-разработки' },
-  { id: 3, icon: '🐍', text: 'Python vs Go в 2024' },
+  { id: 1, icon: 'idea' },
+  { id: 2, icon: 'code' },
+  { id: 3, icon: 'terminal' },
 ]
 
 const handleSubmit = async (promptText?: string) => {
@@ -39,12 +41,12 @@ const handleSubmit = async (promptText?: string) => {
     const newChatId = await chatStore.startChatWithMessage(textToSubmit)
 
     if (!newChatId) {
-      throw new Error('Бэкенд не вернул ID нового чата')
+      throw new Error('Backend did not return a new chat ID')
     }
 
     await router.push({ name: 'chat-active', params: { id: newChatId } })
   } catch (error) {
-    console.error('[HomeChatView] Не удалось перейти в чат:', error)
+    console.error('[HomeChatView] Failed to navigate to chat:', error)
   } finally {
     isSubmitting.value = false
   }
@@ -54,7 +56,7 @@ const handleSubmit = async (promptText?: string) => {
 <template>
   <main class="home-chat">
     <div class="centered-wrapper">
-      <h1 class="brand-title">Чем я могу помочь?</h1>
+      <h1 class="brand-title">{{ t('chat.home.heading') }}</h1>
 
       <form
         @submit.prevent="handleSubmit()"
@@ -64,12 +66,12 @@ const handleSubmit = async (promptText?: string) => {
         <input
           v-model="query"
           type="text"
-          placeholder="Введите ваш запрос..."
+          :placeholder="t('chat.home.placeholder')"
           class="main-input"
           autocomplete="off"
           autofocus
           :disabled="isSubmitting"
-          aria-label="Запрос к AI"
+          :aria-label="t('chat.home.inputAriaLabel')"
           @keydown.ctrl.enter.prevent="handleSubmit()"
           @keydown.meta.enter.prevent="handleSubmit()"
         />
@@ -78,7 +80,7 @@ const handleSubmit = async (promptText?: string) => {
           type="submit"
           class="send-btn"
           :disabled="!query.trim() || isSubmitting"
-          aria-label="Отправить запрос"
+          :aria-label="t('chat.home.sendAriaLabel')"
         >
           <svg
             aria-hidden="true"
@@ -97,18 +99,64 @@ const handleSubmit = async (promptText?: string) => {
         </button>
       </form>
 
-      <div class="quick-prompts" aria-label="Быстрые запросы">
+      <div class="quick-prompts" :aria-label="t('chat.home.quickPromptsAriaLabel')">
         <!-- Replaced <span> with <button> for proper semantics and A11y -->
         <button
-          v-for="prompt in quickPrompts"
+          v-for="(prompt, index) in quickPrompts"
           :key="prompt.id"
           type="button"
           class="prompt-tag"
           :disabled="isSubmitting"
-          @click="handleSubmit(prompt.text)"
+          @click="handleSubmit(t(`chat.home.quickPrompts.${index}`))"
         >
-          <span class="prompt-icon">{{ prompt.icon }}</span>
-          {{ prompt.text }}
+          <span class="prompt-icon">
+            <svg
+              v-if="prompt.icon === 'idea'"
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path
+                d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1.3.5 2.6 1.5 3.5.8.8 1.3 1.5 1.5 2.5"
+              ></path>
+              <path d="M9 18h6"></path>
+              <path d="M10 22h4"></path>
+            </svg>
+            <svg
+              v-else-if="prompt.icon === 'code'"
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <polyline points="16 18 22 12 16 6"></polyline>
+              <polyline points="8 6 2 12 8 18"></polyline>
+            </svg>
+            <svg
+              v-else
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <polyline points="4 17 10 11 4 5"></polyline>
+              <line x1="12" y1="19" x2="20" y2="19"></line>
+            </svg>
+          </span>
+          {{ t(`chat.home.quickPrompts.${index}`) }}
         </button>
       </div>
     </div>
@@ -235,6 +283,10 @@ const handleSubmit = async (promptText?: string) => {
   flex-wrap: wrap;
   justify-content: center;
   gap: 12px;
+}
+
+.prompt-icon {
+  display: flex;
 }
 
 .prompt-tag {

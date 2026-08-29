@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 
+const { t } = useI18n()
 const isDark = ref(false)
 
 const switchTheme = () => {
@@ -29,7 +31,7 @@ onMounted(() => {
   <button
     class="theme-toggle-btn"
     @click="switchTheme"
-    :title="isDark ? 'Включить светлую тему' : 'Включить темную тему'"
+    :title="isDark ? t('theme.switchToLight') : t('theme.switchToDark')"
   >
     <svg
       v-if="!isDark"

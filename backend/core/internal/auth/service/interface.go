@@ -8,7 +8,8 @@ import (
 
 type AuthService interface {
 	Register(ctx context.Context, email, password, name, login, anonUserID string) (Token, error)
-	Login(ctx context.Context, email, password string) (Token, error)
+	// Login accepts either an email or a login/username as identifier.
+	Login(ctx context.Context, identifier, password string) (Token, error)
 	ValidateToken(ctx context.Context, tokenstring string) (string, error)
 	CreateAnonymous(ctx context.Context) (Token, error)
 	GetProfile(ctx context.Context, userID string) (domain.User, error)

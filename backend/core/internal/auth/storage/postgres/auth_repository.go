@@ -101,6 +101,28 @@ func (r *PostgresRepository) GetUserByEmail(ctx context.Context, email string) (
 	}, nil
 }
 
+func (r *PostgresRepository) GetUserByLogin(ctx context.Context, login string) (domain.User, error) {
+	q := r.getQueries(ctx)
+
+	dbUser, err := q.GetUserByLogin(ctx, &login)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return domain.User{}, domain.ErrNotFound
+		}
+		return domain.User{}, err
+	}
+
+	return domain.User{
+		ID:           dbUser.ID.String(),
+		Email:        dbUser.Email,
+		PasswordHash: dbUser.PasswordHash,
+		Role:         dbUser.Role,
+		Name:         dbUser.Name,
+		Login:        dbUser.Login,
+		CreatedAt:    dbUser.CreatedAt.Time,
+	}, nil
+}
+
 func (r *PostgresRepository) GetUserByID(ctx context.Context, id string) (domain.User, error) {
 	q := r.getQueries(ctx)
 

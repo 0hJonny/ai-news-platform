@@ -1,8 +1,11 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 import type { ChatMessage } from '@/types/chat/component'
 import ThinkingBlock from './ThinkingBlock.vue'
 import { renderMarkdown } from '@/utils/markdown'
+
+const { t } = useI18n()
 
 const props = defineProps<{
   message: ChatMessage
@@ -57,7 +60,7 @@ const renderedContent = computed(() => {
     </div>
 
     <div v-if="message.role === 'user'" class="actions user-actions">
-      <button @click="copyText" class="icon-btn" title="Копировать">
+      <button @click="copyText" class="icon-btn" :title="t('chat.message.copy')">
         <svg
           v-if="isCopied"
           class="icon-success"
@@ -108,7 +111,7 @@ const renderedContent = computed(() => {
         v-if="message.role === 'assistant' && (!isStreaming || !isLast)"
         class="actions ai-actions"
       >
-        <button @click="copyText" class="icon-btn" title="Копировать">
+        <button @click="copyText" class="icon-btn" :title="t('chat.message.copy')">
           <svg
             v-if="isCopied"
             class="icon-success"
@@ -142,7 +145,7 @@ const renderedContent = computed(() => {
           class="icon-btn"
           :class="{ 'active-like': message.reaction === 'like' }"
           :disabled="isStreaming"
-          title="Хороший ответ"
+          :title="t('chat.message.like')"
         >
           <svg
             viewBox="0 0 24 24"
@@ -163,7 +166,7 @@ const renderedContent = computed(() => {
           class="icon-btn"
           :class="{ 'active-dislike': message.reaction === 'dislike' }"
           :disabled="isStreaming"
-          title="Плохой ответ"
+          :title="t('chat.message.dislike')"
         >
           <svg
             viewBox="0 0 24 24"
@@ -183,7 +186,7 @@ const renderedContent = computed(() => {
           @click="emit('regenerate', message.id)"
           class="icon-btn"
           :disabled="isStreaming"
-          title="Сгенерировать заново"
+          :title="t('chat.message.regenerate')"
         >
           <svg
             viewBox="0 0 24 24"

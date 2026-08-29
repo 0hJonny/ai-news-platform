@@ -15,7 +15,21 @@ defineProps<{
 
 <template>
   <div class="verification-panel">
-    <div class="verification-icon" aria-hidden="true">✉️</div>
+    <div class="verification-icon" aria-hidden="true">
+      <svg
+        width="36"
+        height="36"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      >
+        <rect width="20" height="16" x="2" y="4" rx="2"></rect>
+        <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"></path>
+      </svg>
+    </div>
     <h2 class="title">{{ title }}</h2>
     <p class="subtitle">{{ subtitle }}</p>
     <RouterLink :to="{ name: backTo }" class="back-link">{{ backLabel }}</RouterLink>
@@ -29,7 +43,9 @@ defineProps<{
 }
 
 .verification-icon {
-  font-size: 36px;
+  display: flex;
+  justify-content: center;
+  color: var(--color-text-title);
   margin-bottom: 16px;
 }
 

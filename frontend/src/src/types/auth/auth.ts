@@ -26,8 +26,7 @@ export interface LoginAvailability {
 }
 
 export type LoginAvailabilityResult =
-  | { success: true; data: LoginAvailability }
-  | { success: false; error: RepositoryError }
+  { success: true; data: LoginAvailability } | { success: false; error: RepositoryError }
 
 export interface RepositoryError {
   code: string
@@ -50,9 +49,7 @@ export type AuthOutcome =
   | { kind: 'verification_required'; challenge: VerificationChallenge }
 
 export type AuthResult =
-  | { success: true; data: AuthOutcome }
-  | { success: false; error: RepositoryError }
+  { success: true; data: AuthOutcome } | { success: false; error: RepositoryError }
 
 export type ProfileResult =
-  | { success: true; data: UserProfile }
-  | { success: false; error: RepositoryError }
+  { success: true; data: UserProfile } | { success: false; error: RepositoryError }

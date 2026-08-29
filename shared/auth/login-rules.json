@@ -1,6 +1,6 @@
 {
-  "pattern": "^[a-z][a-z0-9_]{2,19}$",
-  "minLength": 3,
+  "pattern": "^[a-z][a-z0-9_]{4,19}$",
+  "minLength": 5,
   "maxLength": 20,
-  "description": "Login/username format: lowercase, starts with a Latin letter, 3-20 chars from [a-z0-9_]."
+  "description": "Login/username format: lowercase, starts with a Latin letter, 5-20 chars from [a-z0-9_]."
 }

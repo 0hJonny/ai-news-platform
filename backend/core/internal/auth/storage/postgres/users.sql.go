@@ -80,6 +80,44 @@ func (q *Queries) GetUserByEmail(ctx context.Context, email *string) (GetUserByE
 	return i, err
 }
 
+const getUserByLogin = `-- name: GetUserByLogin :one
+SELECT a.id,
+       a.email,
+       a.password_hash,
+       a.created_at,
+       a.role,
+       a.name,
+       a.login
+  FROM auth.users a
+WHERE a.login = $1
+LIMIT 1
+`
+
+type GetUserByLoginRow struct {
+	ID           pgtype.UUID        `json:"id"`
+	Email        *string            `json:"email"`
+	PasswordHash *string            `json:"password_hash"`
+	CreatedAt    pgtype.Timestamptz `json:"created_at"`
+	Role         domain.UserRole    `json:"role"`
+	Name         *string            `json:"name"`
+	Login        *string            `json:"login"`
+}
+
+func (q *Queries) GetUserByLogin(ctx context.Context, login *string) (GetUserByLoginRow, error) {
+	row := q.db.QueryRow(ctx, getUserByLogin, login)
+	var i GetUserByLoginRow
+	err := row.Scan(
+		&i.ID,
+		&i.Email,
+		&i.PasswordHash,
+		&i.CreatedAt,
+		&i.Role,
+		&i.Name,
+		&i.Login,
+	)
+	return i, err
+}
+
 const getUserById = `-- name: GetUserById :one
 SELECT a.id,
        a.email,

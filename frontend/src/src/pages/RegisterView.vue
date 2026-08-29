@@ -21,9 +21,16 @@ const localeStore = useLocaleStore()
 const authStore = useAuthStore()
 const { t } = useI18n()
 
-// 'form' is the only step reachable today — register() can only ever
-// resolve 'authenticated' until the backend emits verification_required.
-const step = ref<'form' | 'verification'>('form')
+// The wizard steps shown as cards: 'info'/'username'/'password' are the
+// data-entry steps (dots below track progress through these three),
+// 'verification' is the rare backend-driven extra-confirmation branch, and
+// 'success' is the terminal confirmation screen shown once registration
+// actually completes — replaces the old immediate redirect.
+const FORM_STEPS = ['info', 'username', 'password'] as const
+type FormStep = (typeof FORM_STEPS)[number]
+const step = ref<FormStep | 'verification' | 'success'>('info')
+
+const currentStepIndex = computed(() => FORM_STEPS.indexOf(step.value as FormStep))
 
 const name = ref('')
 const email = ref('')
@@ -114,6 +121,29 @@ const isPasswordMatch = computed(
   () => confirmPassword.value.length > 0 && confirmPassword.value === password.value,
 )
 
+// Per-step gating for the "Next"/"Submit" button — kept separate from the
+// validators above since a step can only advance once its own fields (not
+// the whole form) are satisfied.
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+const isInfoStepValid = computed(
+  () => name.value.trim().length > 0 && EMAIL_PATTERN.test(email.value.trim()),
+)
+const isUsernameStepValid = computed(
+  () => isLoginValid.value && loginAvailability.value === 'available',
+)
+const isPasswordStepValid = computed(() => isPasswordValid.value && isPasswordMatch.value)
+
+const canAdvance = computed(() => {
+  if (step.value === 'info') return isInfoStepValid.value
+  if (step.value === 'username') return isUsernameStepValid.value
+  return isPasswordStepValid.value
+})
+
+const goBack = () => {
+  const idx = currentStepIndex.value
+  if (idx > 0) step.value = FORM_STEPS[idx - 1]
+}
+
 // Purely client-side validation errors (never touch the backend), kept
 // separate from authStore.errorCode which is reserved for server responses.
 const localErrorCode = ref<string | null>(null)
@@ -128,6 +158,18 @@ watch([name, email, login, password, confirmPassword], () => {
 
 const handleSubmit = async () => {
   localErrorCode.value = null
+
+  // On the first two steps, the form's submit event just means "advance"
+  // (Enter in a field, or the Next button) — the actual registration call
+  // only fires once the password step is reached.
+  if (step.value === 'info') {
+    if (isInfoStepValid.value) step.value = 'username'
+    return
+  }
+  if (step.value === 'username') {
+    if (isUsernameStepValid.value) step.value = 'password'
+    return
+  }
 
   if (isLoginTouched.value && !isLoginValid.value) {
     localErrorCode.value = 'VALIDATION_LOGIN_INVALID'
@@ -154,10 +196,17 @@ const handleSubmit = async () => {
   })
 
   if (outcome === 'authenticated') {
-    router.push({ name: 'Login' })
+    // register() already stores the token (see authStore._handleSuccess),
+    // so the user is authenticated at this point — show a confirmation
+    // instead of redirecting, and only navigate once they dismiss it.
+    step.value = 'success'
   } else if (outcome === 'verification_required') {
     step.value = 'verification'
   }
+}
+
+const onContinue = () => {
+  router.push({ name: 'Home' })
 }
 </script>
 
@@ -173,6 +222,30 @@ const handleSubmit = async () => {
         :back-label="t('register.verification.backToLogin')"
         back-to="Login"
       />
+
+      <div v-else-if="step === 'success'" class="success-panel">
+        <div class="success-icon" aria-hidden="true">
+          <svg
+            width="36"
+            height="36"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <circle cx="12" cy="12" r="10"></circle>
+            <path d="m9 12 2 2 4-4"></path>
+          </svg>
+        </div>
+        <h2 class="title">{{ $t('register.success.title') }}</h2>
+        <p class="subtitle">{{ $t('register.success.subtitle') }}</p>
+        <button type="button" class="submit-btn continue-btn" @click="onContinue">
+          {{ $t('register.success.continue') }}
+        </button>
+      </div>
+
       <template v-else>
         <div class="header">
           <h1 class="title">{{ $t('register.title') }}</h1>
@@ -184,190 +257,235 @@ const handleSubmit = async () => {
         </div>
 
         <form @submit.prevent="handleSubmit" class="form">
-          <div class="input-group">
-            <input
-              v-model="name"
-              type="text"
-              :placeholder="$t('register.name_placeholder')"
-              class="input"
-              required
-              autocomplete="name"
-              :disabled="authStore.isLoading"
-            />
-          </div>
+          <Transition name="step-fade" mode="out-in">
+            <div :key="step" class="step-panel">
+              <template v-if="step === 'info'">
+                <div class="input-group">
+                  <input
+                    v-model="name"
+                    type="text"
+                    :placeholder="$t('register.name_placeholder')"
+                    class="input"
+                    required
+                    autocomplete="name"
+                    autofocus
+                    :disabled="authStore.isLoading"
+                  />
+                </div>
 
-          <div class="input-group">
-            <input
-              v-model="email"
-              type="email"
-              :placeholder="$t('register.email_placeholder')"
-              class="input"
-              required
-              autocomplete="email"
-              :disabled="authStore.isLoading"
-            />
-          </div>
+                <div class="input-group">
+                  <input
+                    v-model="email"
+                    type="email"
+                    :placeholder="$t('register.email_placeholder')"
+                    class="input"
+                    required
+                    autocomplete="email"
+                    :disabled="authStore.isLoading"
+                  />
+                </div>
+              </template>
 
-          <div class="input-group">
-            <input
-              v-model="login"
-              type="text"
-              :placeholder="$t('register.login_placeholder')"
-              class="input"
-              :class="{
-                'input-error': (isLoginTouched && !isLoginValid) || loginAvailability === 'taken',
-                'input-success': isLoginValid && loginAvailability === 'available',
-              }"
-              required
-              autocomplete="username"
-              :disabled="authStore.isLoading"
-              @input="onLoginInput"
-            />
-            <span v-if="loginAvailability === 'checking'" class="login-status">
-              {{ $t('register.login_checking') }}
-            </span>
+              <template v-else-if="step === 'username'">
+                <div class="input-group">
+                  <input
+                    v-model="login"
+                    type="text"
+                    :placeholder="$t('register.login_placeholder')"
+                    class="input"
+                    :class="{
+                      'input-error':
+                        (isLoginTouched && !isLoginValid) || loginAvailability === 'taken',
+                      'input-success': isLoginValid && loginAvailability === 'available',
+                    }"
+                    required
+                    autocomplete="username"
+                    autofocus
+                    :disabled="authStore.isLoading"
+                    @input="onLoginInput"
+                  />
+                  <span v-if="loginAvailability === 'checking'" class="login-status">
+                    {{ $t('register.login_checking') }}
+                  </span>
+                  <span
+                    v-else-if="loginAvailability === 'available'"
+                    class="login-status login-status-success"
+                  >
+                    {{ $t('register.login_available') }}
+                  </span>
+                  <span
+                    v-else-if="loginAvailability === 'taken'"
+                    class="login-status login-status-error"
+                  >
+                    {{ $t('register.login_taken') }}
+                  </span>
+                </div>
+
+                <div
+                  v-if="isLoginTouched"
+                  class="password-rules"
+                  role="list"
+                  :aria-label="$t('register.loginRulesAriaLabel')"
+                >
+                  <div
+                    v-for="rule in loginRules"
+                    :key="rule.id"
+                    class="rule-item"
+                    :class="{ success: rule.status }"
+                    role="listitem"
+                  >
+                    <span class="rule-icon">{{ rule.status ? '✓' : '○' }}</span>
+                    <span class="rule-text">{{ $t(`validation.${rule.label}`) }}</span>
+                  </div>
+                </div>
+
+                <div v-if="loginSuggestions.length" class="login-suggestions">
+                  <span class="login-suggestions-label">{{
+                    $t('register.login_suggestions_label')
+                  }}</span>
+                  <button
+                    v-for="suggestion in loginSuggestions"
+                    :key="suggestion"
+                    type="button"
+                    class="login-suggestion-btn"
+                    @click="pickLoginSuggestion(suggestion)"
+                  >
+                    {{ suggestion }}
+                  </button>
+                </div>
+              </template>
+
+              <template v-else-if="step === 'password'">
+                <div class="input-group password-group">
+                  <input
+                    v-model="password"
+                    :type="showPassword ? 'text' : 'password'"
+                    :placeholder="$t('register.password_placeholder')"
+                    class="input"
+                    :class="{ 'input-error': isPasswordTouched && !isPasswordValid }"
+                    required
+                    autocomplete="new-password"
+                    autofocus
+                    :disabled="authStore.isLoading"
+                  />
+                  <button
+                    type="button"
+                    class="toggle-password-btn"
+                    @click="showPassword = !showPassword"
+                    :aria-label="
+                      showPassword ? $t('register.hidePassword') : $t('register.showPassword')
+                    "
+                    :tabindex="-1"
+                  >
+                    <svg
+                      v-if="showPassword"
+                      width="20"
+                      height="20"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    >
+                      <path
+                        d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"
+                      ></path>
+                      <line x1="1" y1="1" x2="23" y2="23"></line>
+                    </svg>
+                    <svg
+                      v-else
+                      width="20"
+                      height="20"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    >
+                      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                      <circle cx="12" cy="12" r="3"></circle>
+                    </svg>
+                  </button>
+                </div>
+
+                <!-- CheckList -->
+                <div
+                  v-if="isPasswordTouched"
+                  class="password-rules"
+                  role="list"
+                  :aria-label="$t('register.passwordRulesAriaLabel')"
+                >
+                  <div
+                    v-for="rule in passwordRules"
+                    :key="rule.id"
+                    class="rule-item"
+                    :class="{ success: rule.status }"
+                    role="listitem"
+                  >
+                    <span class="rule-icon">{{ rule.status ? '✓' : '○' }}</span>
+                    <span class="rule-text">{{ $t(`validation.${rule.label}`) }}</span>
+                  </div>
+                </div>
+
+                <div class="input-group">
+                  <input
+                    v-model="confirmPassword"
+                    type="password"
+                    :placeholder="$t('register.confirm_password_placeholder')"
+                    class="input"
+                    :class="{
+                      'input-error': confirmPassword.length > 0 && !isPasswordMatch,
+                      'input-success': isPasswordMatch,
+                    }"
+                    required
+                    autocomplete="new-password"
+                    :disabled="authStore.isLoading"
+                  />
+                </div>
+              </template>
+            </div>
+          </Transition>
+
+          <div
+            class="step-dots"
+            role="tablist"
+            :aria-label="
+              t('register.stepAriaLabel', {
+                current: currentStepIndex + 1,
+                total: FORM_STEPS.length,
+              })
+            "
+          >
             <span
-              v-else-if="loginAvailability === 'available'"
-              class="login-status login-status-success"
-            >
-              {{ $t('register.login_available') }}
-            </span>
-            <span v-else-if="loginAvailability === 'taken'" class="login-status login-status-error">
-              {{ $t('register.login_taken') }}
-            </span>
-          </div>
-
-          <div
-            v-if="isLoginTouched"
-            class="password-rules"
-            role="list"
-            aria-label="Требования к логину"
-          >
-            <div
-              v-for="rule in loginRules"
-              :key="rule.id"
-              class="rule-item"
-              :class="{ success: rule.status }"
-              role="listitem"
-            >
-              <span class="rule-icon">{{ rule.status ? '✓' : '○' }}</span>
-              <span class="rule-text">{{ $t(`validation.${rule.label}`) }}</span>
-            </div>
-          </div>
-
-          <div v-if="loginSuggestions.length" class="login-suggestions">
-            <span class="login-suggestions-label">{{
-              $t('register.login_suggestions_label')
-            }}</span>
-            <button
-              v-for="suggestion in loginSuggestions"
-              :key="suggestion"
-              type="button"
-              class="login-suggestion-btn"
-              @click="pickLoginSuggestion(suggestion)"
-            >
-              {{ suggestion }}
-            </button>
-          </div>
-
-          <div class="input-group password-group">
-            <input
-              v-model="password"
-              :type="showPassword ? 'text' : 'password'"
-              :placeholder="$t('register.password_placeholder')"
-              class="input"
-              :class="{ 'input-error': isPasswordTouched && !isPasswordValid }"
-              required
-              autocomplete="new-password"
-              :disabled="authStore.isLoading"
-            />
-            <button
-              type="button"
-              class="toggle-password-btn"
-              @click="showPassword = !showPassword"
-              :aria-label="showPassword ? 'Скрыть пароль' : 'Показать пароль'"
-              :tabindex="-1"
-            >
-              <svg
-                v-if="showPassword"
-                width="20"
-                height="20"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              >
-                <path
-                  d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"
-                ></path>
-                <line x1="1" y1="1" x2="23" y2="23"></line>
-              </svg>
-              <svg
-                v-else
-                width="20"
-                height="20"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              >
-                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-                <circle cx="12" cy="12" r="3"></circle>
-              </svg>
-            </button>
-          </div>
-
-          <!-- CheckList -->
-          <div
-            v-if="isPasswordTouched"
-            class="password-rules"
-            role="list"
-            aria-label="Требования к паролю"
-          >
-            <div
-              v-for="rule in passwordRules"
-              :key="rule.id"
-              class="rule-item"
-              :class="{ success: rule.status }"
-              role="listitem"
-            >
-              <span class="rule-icon">{{ rule.status ? '✓' : '○' }}</span>
-              <span class="rule-text">{{ $t(`validation.${rule.label}`) }}</span>
-            </div>
-          </div>
-
-          <div class="input-group">
-            <input
-              v-model="confirmPassword"
-              type="password"
-              :placeholder="$t('register.confirm_password_placeholder')"
-              class="input"
-              :class="{
-                'input-error': confirmPassword.length > 0 && !isPasswordMatch,
-                'input-success': isPasswordMatch,
-              }"
-              required
-              autocomplete="new-password"
-              :disabled="authStore.isLoading"
-            />
+              v-for="(s, i) in FORM_STEPS"
+              :key="s"
+              class="dot"
+              :class="{ active: i === currentStepIndex, done: i < currentStepIndex }"
+            ></span>
           </div>
 
           <div class="actions">
-            <button type="submit" class="submit-btn" :disabled="authStore.isLoading">
-              <span v-if="authStore.isLoading">{{
-                $t('register.loading') || 'Создание аккаунта...'
-              }}</span>
-              <span v-else>{{ $t('register.submit') }}</span>
+            <button
+              v-if="currentStepIndex > 0"
+              type="button"
+              class="back-btn"
+              :disabled="authStore.isLoading"
+              @click="goBack"
+            >
+              {{ $t('register.back') }}
             </button>
-            <div class="create-account">
-              <RouterLink to="/login" class="create-link">
-                {{ $t('register.already_have_account') }}
-              </RouterLink>
-            </div>
+            <button type="submit" class="submit-btn" :disabled="authStore.isLoading || !canAdvance">
+              <span v-if="authStore.isLoading">{{ $t('register.loading') }}</span>
+              <span v-else-if="step === 'password'">{{ $t('register.submit') }}</span>
+              <span v-else>{{ $t('register.next') }}</span>
+            </button>
+          </div>
+          <div class="create-account">
+            <RouterLink to="/login" class="create-link">
+              {{ $t('register.already_have_account') }}
+            </RouterLink>
           </div>
         </form>
 
@@ -491,11 +609,61 @@ const handleSubmit = async () => {
   box-shadow: 0 0 0 1px #ef4444 !important;
 }
 
+.step-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.step-fade-enter-active,
+.step-fade-leave-active {
+  transition:
+    opacity 0.2s ease,
+    transform 0.2s ease;
+}
+.step-fade-enter-from {
+  opacity: 0;
+  transform: translateX(16px);
+}
+.step-fade-leave-to {
+  opacity: 0;
+  transform: translateX(-16px);
+}
+
+.step-dots {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 20px;
+}
+
+.dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background-color: var(--color-border);
+  transition:
+    width 0.25s ease,
+    background-color 0.25s ease;
+}
+
+.dot.done {
+  background-color: var(--color-text-sub);
+}
+
+.dot.active {
+  width: 22px;
+  background-color: var(--color-text-title);
+}
+
 .actions {
+  display: flex;
+  gap: 12px;
   padding-top: 16px;
 }
 
 .submit-btn {
+  flex: 1;
   width: 100%;
   padding: 12px;
   background-color: var(--color-text-title);
@@ -511,6 +679,35 @@ const handleSubmit = async () => {
 }
 .submit-btn:active {
   transform: scale(0.98);
+}
+
+.back-btn {
+  flex: 0 0 auto;
+  padding: 12px 20px;
+  border-radius: 8px;
+  border: 1px solid var(--color-border);
+  background-color: transparent;
+  color: var(--color-text-primary);
+  font-weight: 500;
+  transition: background-color 0.3s;
+}
+.back-btn:hover {
+  background-color: var(--color-bkg-soft);
+}
+
+.success-panel {
+  text-align: center;
+  padding: 8px 0 4px;
+}
+.success-icon {
+  display: flex;
+  justify-content: center;
+  color: #22c55e;
+  margin-bottom: 16px;
+}
+.continue-btn {
+  width: 100%;
+  margin-top: 24px;
 }
 
 .create-account {
@@ -565,6 +762,7 @@ const handleSubmit = async () => {
 }
 
 .submit-btn:disabled,
+.back-btn:disabled,
 .lang-select:disabled,
 .input:disabled {
   opacity: 0.6;

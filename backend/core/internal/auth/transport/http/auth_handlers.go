@@ -73,13 +73,23 @@ func (h *Handler) HandleLogin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	token, err := h.service.Login(r.Context(), req.Email, req.Password)
+	// The client sends whichever of the two the user typed — an email or a
+	// login/username — in req.Email; req.Login is only ever populated by
+	// the register form. Falling back to req.Login here keeps the DTO
+	// working unchanged if a caller ever does send the identifier there
+	// instead.
+	identifier := req.Email
+	if identifier == "" {
+		identifier = req.Login
+	}
+
+	token, err := h.service.Login(r.Context(), identifier, req.Password)
 	if err != nil {
 		if errors.Is(err, domain.ErrInvalidCreds) {
 			h.respondWithError(w, http.StatusUnauthorized, "AUTH_INVALID_CREDENTIALS")
 			return
 		}
-		h.log.Error("login failed", "email", req.Email, "error", err)
+		h.log.Error("login failed", "identifier", identifier, "error", err)
 		h.respondWithError(w, http.StatusInternalServerError, "INTERNAL_ERROR")
 		return
 	}

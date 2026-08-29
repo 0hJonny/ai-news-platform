@@ -46,7 +46,9 @@ const startOver = async () => {
       <div class="dialog">
         <h2 class="title">{{ $t('invalidSession.title') }}</h2>
         <p class="subtitle">
-          {{ authStore.isGuest ? $t('invalidSession.subtitle') : $t('invalidSession.subtitleAccount') }}
+          {{
+            authStore.isGuest ? $t('invalidSession.subtitle') : $t('invalidSession.subtitleAccount')
+          }}
         </p>
 
         <div class="actions">

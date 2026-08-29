@@ -149,7 +149,7 @@ const handleImageError = (): void => {
         </p>
 
         <!-- Tags -->
-        <nav class="article-card__tags" aria-label="Article tags">
+        <nav class="article-card__tags" :aria-label="t('article.tagsAriaLabel')">
           <router-link
             v-for="tag in article.tags.slice(0, 3)"
             :key="tag"

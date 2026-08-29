@@ -81,7 +81,24 @@ watch(
 <template>
   <div class="articles-list">
     <div v-if="error && !loading" class="error-state">
-      <div class="error-icon">⚠️</div>
+      <div class="error-icon">
+        <svg
+          width="48"
+          height="48"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <path
+            d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"
+          ></path>
+          <line x1="12" y1="9" x2="12" y2="13"></line>
+          <line x1="12" y1="17" x2="12.01" y2="17"></line>
+        </svg>
+      </div>
       <h3 class="error-title">{{ $t('articles.error.title') }}</h3>
       <p class="error-message">{{ error }}</p>
       <button class="error-button" @click="loadArticles">
@@ -106,7 +123,23 @@ watch(
       </template>
 
       <div v-else class="empty-state" :class="{ 'empty-state--sidebar': sideBar }">
-        <div class="empty-icon">📭</div>
+        <div class="empty-icon">
+          <svg
+            width="64"
+            height="64"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <path d="M22 12h-6l-2 3h-4l-2-3H2"></path>
+            <path
+              d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"
+            ></path>
+          </svg>
+        </div>
         <h3 class="empty-title">
           {{ sideBar ? $t('article.noRecommendations') : $t('article.noData') }}
         </h3>
@@ -154,7 +187,9 @@ watch(
 }
 
 .error-icon {
-  font-size: 48px;
+  display: flex;
+  justify-content: center;
+  color: #ef4444;
   margin-bottom: 16px;
 }
 
@@ -205,7 +240,9 @@ watch(
 }
 
 .empty-icon {
-  font-size: 64px;
+  display: flex;
+  justify-content: center;
+  color: var(--color-text-sub);
   margin-bottom: 24px;
   opacity: 0.5;
 }

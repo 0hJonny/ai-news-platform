@@ -1,5 +1,8 @@
 <script setup lang="ts">
 import { ref, onMounted, nextTick, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
+
+const { t } = useI18n()
 
 const props = defineProps<{
   modelValue: string
@@ -59,7 +62,7 @@ onMounted(() => {
     <textarea
       ref="textareaRef"
       :value="modelValue"
-      placeholder="Введите вопрос..."
+      :placeholder="t('chat.input.placeholder')"
       rows="1"
       @input="onInput"
       @keydown="handleKeydown"

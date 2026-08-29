@@ -15,6 +15,18 @@ SELECT a.id,
 WHERE a.email = $1
 LIMIT 1;
 
+-- name: GetUserByLogin :one
+SELECT a.id,
+       a.email,
+       a.password_hash,
+       a.created_at,
+       a.role,
+       a.name,
+       a.login
+  FROM auth.users a
+WHERE a.login = $1
+LIMIT 1;
+
 -- name: GetUserById :one
 SELECT a.id,
        a.email,

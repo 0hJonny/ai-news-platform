@@ -43,6 +43,8 @@
       "title": "Ошибка"
     },
     "back": "Назад",
+    "backAlt": "Назад",
+    "tagsAriaLabel": "Теги статьи",
     "notFound": "Статья не найдена",
     "goBack": "Вернуться назад",
     "loading": "Загрузка...",
@@ -108,12 +110,55 @@
       "synthesize": "Синтез",
       "fact_check": "Проверка фактов",
       "finalize": "Формирование ответа"
+    },
+    "input": {
+      "placeholder": "Введите вопрос..."
+    },
+    "message": {
+      "copy": "Копировать",
+      "like": "Хороший ответ",
+      "dislike": "Плохой ответ",
+      "regenerate": "Сгенерировать заново"
+    },
+    "sidebar": {
+      "confirmDelete": "Удалить этот чат? Действие необратимо.",
+      "openMenu": "Открыть меню",
+      "hidePanel": "Скрыть панель",
+      "showPanel": "Показать панель",
+      "newChat": "Новый чат",
+      "createChat": "Создать чат",
+      "recent": "Недавние",
+      "noChats": "Нет активных чатов",
+      "rename": "Переименовать",
+      "delete": "Удалить"
+    },
+    "home": {
+      "heading": "Чем я могу помочь?",
+      "placeholder": "Введите ваш запрос...",
+      "inputAriaLabel": "Запрос к AI",
+      "sendAriaLabel": "Отправить запрос",
+      "quickPromptsAriaLabel": "Быстрые запросы",
+      "quickPrompts": [
+        "Зачем нужны большие языковые модели?",
+        "Популярные фреймворки для Веб-разработки",
+        "Python vs Go в 2024"
+      ]
     }
+  },
+  "theme": {
+    "toggleAria": "Переключить тему",
+    "darkAlt": "Тёмная тема",
+    "lightAlt": "Светлая тема",
+    "switchToLight": "Включить светлую тему",
+    "switchToDark": "Включить темную тему"
+  },
+  "language": {
+    "selectAriaLabel": "Выбрать язык"
   },
   "login": {
     "title": "Вход в аккаунт",
     "subtitle": "Введите свои данные для продолжения",
-    "email_placeholder": "Электронная почта",
+    "identifier_placeholder": "Email или логин",
     "password_placeholder": "Пароль",
     "forgot_password": "Забыли пароль?",
     "submit": "Войти",
@@ -142,6 +187,18 @@
     "loading": "Создание аккаунта...",
     "already_have_account": "Уже есть аккаунт?",
     "privacy": "Политика конфиденциальности",
+    "loginRulesAriaLabel": "Требования к логину",
+    "passwordRulesAriaLabel": "Требования к паролю",
+    "showPassword": "Показать пароль",
+    "hidePassword": "Скрыть пароль",
+    "next": "Далее",
+    "back": "Назад",
+    "stepAriaLabel": "Шаг {current} из {total}",
+    "success": {
+      "title": "Вы успешно зарегистрированы!",
+      "subtitle": "Аккаунт создан. Добро пожаловать!",
+      "continue": "Перейти на главную"
+    },
     "verification": {
       "title": "Подтвердите почту",
       "subtitle": "Мы отправили письмо на {target}. Перейдите по ссылке из письма, чтобы завершить регистрацию.",
@@ -182,13 +239,13 @@
     "PASS_LOWERCASE": "Строчная буква (a-z)",
     "PASS_NUMBER": "Цифра (0-9)",
     "PASS_SPECIAL_CHAR": "Спецсимвол (!#&*%...)",
-    "LOGIN_LENGTH": "От 3 до 20 символов",
+    "LOGIN_LENGTH": "От 5 до 20 символов",
     "LOGIN_STARTS_WITH_LETTER": "Начинается с латинской буквы",
     "LOGIN_CHARSET": "Только латиница, цифры и _"
   },
   "errors": {
     "api": {
-      "AUTH_INVALID_CREDENTIALS": "Неверный email или пароль.",
+      "AUTH_INVALID_CREDENTIALS": "Неверный email/логин или пароль.",
       "AUTH_ACCOUNT_NOT_FOUND": "Аккаунт не найден.",
       "AUTH_ACCOUNT_LOCKED": "Аккаунт заблокирован. Обратитесь в поддержку.",
       "AUTH_TOO_MANY_ATTEMPTS": "Слишком много попыток. Попробуйте через {minutes} мин.",
