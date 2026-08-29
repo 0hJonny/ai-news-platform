@@ -1,4 +1,4 @@
-"""Stage 5: parsing.scrape_source — the Celery task that fetches and parses
+"""parsing.scrape_source — the Celery task that fetches and parses
 a single article URL (already reserved as a draft row by producer.py), then
 hands the result off to the annotation pipeline.
 

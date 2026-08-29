@@ -1,5 +1,5 @@
 -- +goose Up
--- Stage 5 observability: article_status alone tells you the *current*
+-- Observability: article_status alone tells you the *current*
 -- state, but not which stage actually broke or why — every failure just
 -- says ERROR. pipeline_stages is the type/lookup table (what stages exist,
 -- in what order); article_pipeline_log is the append-only "planner" that

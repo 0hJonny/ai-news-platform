@@ -1,9 +1,9 @@
 -- +goose Up
--- Stage 4: article state machine driven by the upcoming Celery-based
--- Parser/Annotation pipeline (see workers/shared/celery_app.py). Every
--- article starts PENDING_PARSING and moves forward as the parsing_queue /
--- annotation_queue tasks (next stage) claim and process it; ERROR is a
--- terminal state for manual/automatic retry handling to pick up later.
+-- Article state machine driven by the Celery-based Parser/Annotation
+-- pipeline (see workers/shared/celery_app.py). Every article starts
+-- PENDING_PARSING and moves forward as the parsing_queue / annotation_queue
+-- tasks claim and process it; ERROR is a terminal state for manual/automatic
+-- retry handling to pick up later.
 CREATE TYPE news.article_status AS ENUM (
     'PENDING_PARSING',
     'PARSING',

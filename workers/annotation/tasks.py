@@ -1,4 +1,4 @@
-"""Stage 5: annotation.annotate_article — the Celery task that fetches a
+"""annotation.annotate_article — the Celery task that fetches a
 parsed article from the Go API, runs it through the existing Ollama-based
 annotation pipeline, and PATCHes the result back onto its own annotation
 job row (PATCH /p/annotations/:id) with status ANNOTATED.

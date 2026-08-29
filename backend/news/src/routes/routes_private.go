@@ -16,7 +16,7 @@ func GroupRouterPrivate(baseRouter *gin.RouterGroup) {
 	protected.GET("/article/check", controllers.CheckForExistingParsedArticle)
 	protected.GET("/annotation/queue", controllers.GetAnnotationQueue)
 
-	// Stage 5: the Celery pipeline's ingest surface (producer + parsing +
+	// The Celery pipeline's ingest surface (producer + parsing +
 	// annotation tasks). Deliberately not behind AuthMiddleware — see the
 	// package doc comment on article_ingest_controller.go for why that's
 	// safe here (news has no published port; only reachable from other

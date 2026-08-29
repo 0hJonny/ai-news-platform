@@ -92,7 +92,7 @@ services:
     networks:
       - platform-network
 
-  # Broker for the Stage 4 Celery pipeline (workers/shared/celery_app.py) —
+  # Broker for the Celery pipeline (workers/shared/celery_app.py) —
   # parsing_queue / annotation_queue live here.
   redis:
     image: redis:7-alpine
@@ -332,8 +332,6 @@ services:
   # profiles: [jobs] => do NOT start on plain `docker compose up`, only explicitly:
   #   docker compose --profile jobs up parser
   #   docker compose --profile jobs up annotation
-  # Stage 4: moving to a task queue pattern (broker + consumers) — for now it's
-  # the same multiprocessing script / pull worker as before.
   # =========================================================================
   parser:
     profiles: ["jobs"]

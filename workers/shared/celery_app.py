@@ -1,10 +1,9 @@
 """Shared Celery application for the Parser and Annotation workers.
 
-Stage 4 (infra only): this wires up the Celery app, its Redis broker/result
-backend, and queue routing. It does NOT define any @app.task functions yet —
-those land in the next stage, as `parser/tasks.py` and
-`annotation/tasks.py` inside each worker's own container. Import this
-module from there as:
+Wires up the Celery app, its Redis broker/result backend, and queue
+routing. It does NOT define any @app.task functions itself — those live
+in `parser/tasks.py` and `annotation/tasks.py` inside each worker's own
+container. Import this module from there as:
 
     from shared.celery_app import app
 

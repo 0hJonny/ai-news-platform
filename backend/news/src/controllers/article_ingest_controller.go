@@ -1,4 +1,4 @@
-// Stage 5: the Celery pipeline's ingest surface. POST /p/articles creates
+// The Celery pipeline's ingest surface. POST /p/articles creates
 // a draft row; PATCH /p/articles/:id/parsed is parsing.scrape_source's
 // only write path; POST /p/articles/:id/annotations reserves an
 // annotation job (one per (article, language) pair) that

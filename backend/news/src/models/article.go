@@ -77,9 +77,9 @@ func (Article) TableName() string {
 	return "articles"
 }
 
-// ArticleDraftRequest is the POST /p/articles payload (Stage 5's
-// producer): all it knows about a candidate article before anything has
-// been scraped is where it came from and what language it's in.
+// ArticleDraftRequest is the POST /p/articles payload (the producer's):
+// all it knows about a candidate article before anything has been
+// scraped is where it came from and what language it's in.
 type ArticleDraftRequest struct {
 	SourceLink   string `json:"source_link" binding:"required"`
 	LanguageCode string `json:"language_code" binding:"required"`

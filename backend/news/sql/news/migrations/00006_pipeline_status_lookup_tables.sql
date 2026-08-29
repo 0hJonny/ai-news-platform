@@ -1,8 +1,7 @@
 -- +goose Up
--- Stage 5 redesign, all in one pass (folds what were originally three
--- migrations into one, since none had shipped yet — no reason to create
--- an ENUM column here just to convert it to a lookup-table FK two steps
--- later):
+-- Redesign, all in one pass (folds what were originally three migrations
+-- into one, since none had shipped yet — no reason to create an ENUM
+-- column here just to convert it to a lookup-table FK two steps later):
 --
 -- 1. articles.status used to describe the WHOLE pipeline (parsing AND
 --    annotation) as one scalar. That breaks the moment annotation

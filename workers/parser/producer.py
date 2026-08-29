@@ -1,4 +1,4 @@
-"""Stage 5: producer — walks each configured CyberNews category listing
+"""producer — walks each configured CyberNews category listing
 page, discovers individual article links, and for every genuinely new one
 reserves a draft via the Go API and enqueues parsing.scrape_source to
 actually fetch+parse it.
