@@ -130,16 +130,3 @@ export function suggestLoginFromName(name: string): string {
   if (withLetterStart.length >= MIN_LOGIN_LENGTH) return withLetterStart
   return withLetterStart.padEnd(MIN_LOGIN_LENGTH, '0')
 }
-
-// Deterministic-looking alternatives to offer when a suggestion is taken,
-// similar to Google's signup suggestions — small numeric suffixes rather
-// than random noise, trimmed so the result never exceeds MAX_LOGIN_LENGTH.
-export function suggestLoginAlternatives(base: string, count = 3): string[] {
-  const trimmedBase = base.slice(0, MAX_LOGIN_LENGTH - 3)
-  const suffixes = [
-    String(Math.floor(10 + Math.random() * 90)),
-    String(Math.floor(100 + Math.random() * 900)),
-    String(new Date().getFullYear()).slice(-2),
-  ]
-  return suffixes.slice(0, count).map((suffix) => `${trimmedBase}${suffix}`)
-}

@@ -3,6 +3,7 @@ import type {
   AuthResult,
   LoginAvailabilityResult,
   ProfileResult,
+  UsernameCheckResult,
 } from '@/types/auth/auth'
 
 export interface IAuthRepository {
@@ -15,4 +16,8 @@ export interface IAuthRepository {
   // every new keystroke should cancel whatever check is still in flight
   // rather than let stale responses race with the latest one.
   checkLoginAvailability(login: string, signal?: AbortSignal): Promise<LoginAvailabilityResult>
+  // The Username Suggestion Engine: like checkLoginAvailability, but a
+  // taken handle comes back with a few DB-verified free alternatives in
+  // the same round trip. Same debounce/AbortSignal contract.
+  checkUsername(query: string, signal?: AbortSignal): Promise<UsernameCheckResult>
 }

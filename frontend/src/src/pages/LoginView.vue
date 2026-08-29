@@ -21,6 +21,7 @@ const step = ref<'form' | 'verification'>('form')
 // field; the backend re-derives this itself from the value it receives.
 const identifier = ref('')
 const password = ref('')
+const showPassword = ref(false)
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 const isEmailIdentifier = computed(() => EMAIL_PATTERN.test(identifier.value.trim()))
@@ -88,13 +89,53 @@ const handleSubmit = async () => {
             </div>
 
             <div class="input-group">
-              <input
-                v-model="password"
-                type="password"
-                :placeholder="$t('login.password_placeholder')"
-                class="input"
-                required
-              />
+              <div class="password-field">
+                <input
+                  v-model="password"
+                  :type="showPassword ? 'text' : 'password'"
+                  :placeholder="$t('login.password_placeholder')"
+                  class="input"
+                  required
+                />
+                <button
+                  type="button"
+                  class="toggle-password-btn"
+                  @click="showPassword = !showPassword"
+                  :aria-label="showPassword ? $t('login.hidePassword') : $t('login.showPassword')"
+                  :tabindex="-1"
+                >
+                  <svg
+                    v-if="showPassword"
+                    width="20"
+                    height="20"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <path
+                      d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"
+                    ></path>
+                    <line x1="1" y1="1" x2="23" y2="23"></line>
+                  </svg>
+                  <svg
+                    v-else
+                    width="20"
+                    height="20"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                    <circle cx="12" cy="12" r="3"></circle>
+                  </svg>
+                </button>
+              </div>
               <div class="forgot-password">
                 <a href="#" class="forgot-link">{{ $t('login.forgot_password') }}</a>
               </div>
@@ -207,8 +248,40 @@ const handleSubmit = async () => {
   box-shadow: 0 0 0 1px var(--color-text-title);
 }
 
+.password-field {
+  position: relative;
+}
+
+.password-field .input {
+  padding-right: 44px;
+}
+
+.toggle-password-btn {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--color-text-sub);
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.2s;
+}
+
+.toggle-password-btn:hover {
+  color: var(--color-text-primary);
+}
+.toggle-password-btn:focus {
+  outline: none;
+}
+
 .forgot-password {
   text-align: right;
+  margin-top: 6px;
 }
 
 .forgot-link {

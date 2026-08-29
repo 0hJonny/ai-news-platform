@@ -8,6 +8,8 @@ import type {
   LoginAvailabilityResult,
   ProfileResult,
   TokenResponse,
+  UsernameCheckResponse,
+  UsernameCheckResult,
   UserProfile,
   VerificationChallenge,
 } from '@/types/auth/auth'
@@ -44,6 +46,7 @@ const FALLBACK_ERROR_MESSAGES = {
   auth: 'Ошибка аутентификации',
   profile: 'Ошибка получения профиля',
   loginAvailability: 'Не удалось проверить доступность логина',
+  checkUsername: 'Не удалось проверить доступность логина',
 } as const
 
 export class ApiAuthRepository implements IAuthRepository {
@@ -78,6 +81,26 @@ export class ApiAuthRepository implements IAuthRepository {
         error: {
           code: code || FALLBACK_ERROR_CODE,
           message: FALLBACK_ERROR_MESSAGES.loginAvailability,
+          details: details || undefined,
+        },
+      }
+    }
+  }
+
+  async checkUsername(query: string, signal?: AbortSignal): Promise<UsernameCheckResult> {
+    try {
+      const { data } = await this.http.get<UsernameCheckResponse>(ENDPOINTS.CHECK_USERNAME, {
+        params: { q: query },
+        signal,
+      })
+      return { success: true, data }
+    } catch (e: unknown) {
+      const { code, details } = getErrorCode(e)
+      return {
+        success: false,
+        error: {
+          code: code || FALLBACK_ERROR_CODE,
+          message: FALLBACK_ERROR_MESSAGES.checkUsername,
           details: details || undefined,
         },
       }

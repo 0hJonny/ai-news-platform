@@ -106,6 +106,7 @@ func (rt *Router) RegisterRoutes() *chi.Mux {
 		r.Post("/login", authProxy.ServeHTTP)
 		r.Post("/anonimous", authProxy.ServeHTTP)
 		r.Get("/login-available", authProxy.ServeHTTP)
+		r.Get("/check-username", authProxy.ServeHTTP)
 		// Was missing entirely — GET /auth/user (fetchProfile on the
 		// frontend) never had a route here, so profile fetches always 404'd
 		// through the gateway. Unrelated to the login field, fixed in

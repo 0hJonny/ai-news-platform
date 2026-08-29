@@ -160,6 +160,8 @@
     "subtitle": "Введите свои данные для продолжения",
     "identifier_placeholder": "Email или логин",
     "password_placeholder": "Пароль",
+    "showPassword": "Показать пароль",
+    "hidePassword": "Скрыть пароль",
     "forgot_password": "Забыли пароль?",
     "submit": "Войти",
     "loading": "Вход...",

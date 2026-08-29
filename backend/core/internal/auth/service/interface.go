@@ -16,4 +16,7 @@ type AuthService interface {
 	// CheckLoginAvailable is a read-only lookup for the registration form's
 	// live availability check — see domain.UserRepository.IsLoginAvailable.
 	CheckLoginAvailable(ctx context.Context, login string) (bool, error)
+	// CheckUsername is CheckLoginAvailable's richer sibling: a taken handle
+	// comes back with DB-verified suggested alternatives.
+	CheckUsername(ctx context.Context, username string) (UsernameCheckResult, error)
 }

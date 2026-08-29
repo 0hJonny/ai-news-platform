@@ -11,6 +11,15 @@ type LoginAvailabilityResponse struct {
 	Available bool `json:"available"`
 }
 
+// CheckUsernameResponse is the Username Suggestion Engine's response:
+// Suggestions is only populated (and only meaningful) when Available is
+// false — omitted from the JSON body entirely when there's nothing to
+// suggest.
+type CheckUsernameResponse struct {
+	Available   bool     `json:"available"`
+	Suggestions []string `json:"suggestions,omitempty"`
+}
+
 type TokenResponse struct {
 	Token     string `json:"token"`
 	ExpiresAt int64  `json:"expires_at"`

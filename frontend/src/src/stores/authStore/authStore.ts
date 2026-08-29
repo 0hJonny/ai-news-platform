@@ -116,6 +116,13 @@ export const useAuthStore = defineStore('auth', () => {
     return repo.checkLoginAvailability(loginValue, signal)
   }
 
+  // Same shape as checkLoginAvailability above, but backs the Username
+  // Suggestion Engine: a taken handle comes back with DB-verified
+  // alternatives in the same round trip.
+  const checkUsername = (query: string, signal?: AbortSignal) => {
+    return repo.checkUsername(query, signal)
+  }
+
   const anonymousLogin = async () => {
     isLoading.value = true
     clearErrors()
@@ -205,6 +212,7 @@ export const useAuthStore = defineStore('auth', () => {
     register,
     login,
     checkLoginAvailability,
+    checkUsername,
     anonymousLogin,
     logout,
     notifySessionExpired,

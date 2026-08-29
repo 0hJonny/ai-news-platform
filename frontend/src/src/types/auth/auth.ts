@@ -28,6 +28,17 @@ export interface LoginAvailability {
 export type LoginAvailabilityResult =
   { success: true; data: LoginAvailability } | { success: false; error: RepositoryError }
 
+// Matches Go: CheckUsernameResponse — the register form's "Username
+// Suggestion Engine" endpoint. suggestions is only populated (and only
+// meaningful) when available is false.
+export interface UsernameCheckResponse {
+  available: boolean
+  suggestions?: string[]
+}
+
+export type UsernameCheckResult =
+  { success: true; data: UsernameCheckResponse } | { success: false; error: RepositoryError }
+
 export interface RepositoryError {
   code: string
   message: string

@@ -123,6 +123,36 @@ func (h *Handler) HandleCheckLoginAvailable(w http.ResponseWriter, r *http.Reque
 	h.respondWithJSON(w, http.StatusOK, LoginAvailabilityResponse{Available: available})
 }
 
+// HandleCheckUsername is the register form's "Username Suggestion Engine"
+// endpoint (GET /api/v1/auth/check-username?q=...): like
+// HandleCheckLoginAvailable, but a taken handle comes back with a handful
+// of DB-verified free alternatives instead of a bare bool. Same
+// malformed-input handling as HandleCheckLoginAvailable — comes back
+// unavailable rather than erroring.
+func (h *Handler) HandleCheckUsername(w http.ResponseWriter, r *http.Request) {
+	username := r.URL.Query().Get("q")
+	if username == "" {
+		h.respondWithError(w, http.StatusBadRequest, "AUTH_INVALID_REQUEST")
+		return
+	}
+
+	result, err := h.service.CheckUsername(r.Context(), username)
+	if err != nil {
+		if errors.Is(err, domain.ErrInvalidLogin) {
+			h.respondWithJSON(w, http.StatusOK, CheckUsernameResponse{Available: false})
+			return
+		}
+		h.log.Error("failed to check username", "username", username, "error", err)
+		h.respondWithError(w, http.StatusInternalServerError, "INTERNAL_ERROR")
+		return
+	}
+
+	h.respondWithJSON(w, http.StatusOK, CheckUsernameResponse{
+		Available:   result.Available,
+		Suggestions: result.Suggestions,
+	})
+}
+
 func (h *Handler) HandleGetProfile(w http.ResponseWriter, r *http.Request) {
 	userID := h.extractUserIDFromToken(r)
 	if userID == "" {

@@ -71,6 +71,14 @@ var loginRules = func() loginRulesSpec {
 
 var loginRegex = regexp.MustCompile(loginRules.Pattern)
 
+// LoginMaxLength exposes the canonical login/username max length so
+// callers outside this package (e.g. the username suggestion generator,
+// which needs to leave room for a suffix) don't have to duplicate the
+// contract loginRules already reads.
+func LoginMaxLength() int {
+	return loginRules.MaxLength
+}
+
 // ValidLoginFormat reports whether login matches loginRegex once
 // lowercased/trimmed. Exported so the service layer's availability-check
 // endpoint can reject an obviously malformed query before ever touching the

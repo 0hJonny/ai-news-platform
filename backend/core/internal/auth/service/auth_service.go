@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"math/rand"
+	"strconv"
 	"strings"
 	"time"
 
@@ -169,6 +171,104 @@ func (s *AuthServiceImpl) CheckLoginAvailable(ctx context.Context, login string)
 		return false, domain.ErrInvalidLogin
 	}
 	return s.repo.IsLoginAvailable(ctx, normalized)
+}
+
+// UsernameCheckResult is CheckUsername's result: whether the requested
+// handle is free, and — only when it isn't — a handful of alternatives
+// that were each individually verified against the database.
+type UsernameCheckResult struct {
+	Available   bool
+	Suggestions []string
+}
+
+const suggestionCount = 3
+
+// maxSuggestionAttempts bounds the retry loop below. Each attempt tries a
+// fresh randomly-suffixed candidate, so with suggestionCount=3 this gives
+// plenty of headroom even if several candidates in a row happen to already
+// be taken; it exists purely so a pathological run can't loop forever.
+const maxSuggestionAttempts = 25
+
+// wordSuggestionSuffixes mirrors the frontend's numeric-suffix suggestions
+// (see loginValidator.ts's suggestLoginAlternatives) with a few word-based
+// alternatives thrown in, closer to what GitHub/Google-style signup
+// suggestion engines offer alongside plain numbers.
+var wordSuggestionSuffixes = []string{"_ai", "_dev", "_pro", "_hq"}
+
+// randomSuggestionSuffix picks a suffix for the given attempt index —
+// two-digit numbers first (matches the frontend's own heuristic), then
+// three-digit, then a couple of word suffixes, then wider random numbers
+// for any attempts beyond that.
+func randomSuggestionSuffix(attempt int) string {
+	switch {
+	case attempt < 2:
+		return strconv.Itoa(10 + rand.Intn(90))
+	case attempt < 4:
+		return strconv.Itoa(100 + rand.Intn(900))
+	case attempt < 4+len(wordSuggestionSuffixes):
+		return wordSuggestionSuffixes[attempt-4]
+	default:
+		return strconv.Itoa(rand.Intn(10000))
+	}
+}
+
+// CheckUsername is CheckLoginAvailable's richer sibling for the
+// registration form's "Username Suggestion Engine": a free handle just
+// reports available, but a taken one comes back with real, DB-verified
+// alternatives instead of leaving the frontend to guess-and-check on its
+// own. Like CheckLoginAvailable, this is only a UX hint — the UNIQUE
+// constraint enforced in Register is what actually guarantees no
+// collision, since a race is still possible between this check and the
+// real INSERT.
+func (s *AuthServiceImpl) CheckUsername(ctx context.Context, username string) (UsernameCheckResult, error) {
+	normalized := strings.ToLower(strings.TrimSpace(username))
+	if !domain.ValidLoginFormat(normalized) {
+		return UsernameCheckResult{}, domain.ErrInvalidLogin
+	}
+
+	available, err := s.repo.IsLoginAvailable(ctx, normalized)
+	if err != nil {
+		return UsernameCheckResult{}, err
+	}
+	if available {
+		return UsernameCheckResult{Available: true}, nil
+	}
+
+	suggestions, err := s.generateAvailableSuggestions(ctx, normalized)
+	if err != nil {
+		return UsernameCheckResult{}, err
+	}
+	return UsernameCheckResult{Available: false, Suggestions: suggestions}, nil
+}
+
+func (s *AuthServiceImpl) generateAvailableSuggestions(ctx context.Context, base string) ([]string, error) {
+	// Leave room for up to a 4-char suffix (the longest word suffix, e.g.
+	// "_dev") within the shared login-rules max length.
+	trimmedBase := base
+	if maxLen := domain.LoginMaxLength(); len(trimmedBase) > maxLen-4 {
+		trimmedBase = trimmedBase[:maxLen-4]
+	}
+
+	suggestions := make([]string, 0, suggestionCount)
+	seen := map[string]bool{base: true}
+
+	for attempt := 0; attempt < maxSuggestionAttempts && len(suggestions) < suggestionCount; attempt++ {
+		candidate := trimmedBase + randomSuggestionSuffix(attempt)
+		if seen[candidate] || !domain.ValidLoginFormat(candidate) {
+			continue
+		}
+		seen[candidate] = true
+
+		available, err := s.repo.IsLoginAvailable(ctx, candidate)
+		if err != nil {
+			return nil, err
+		}
+		if available {
+			suggestions = append(suggestions, candidate)
+		}
+	}
+
+	return suggestions, nil
 }
 
 func (s *AuthServiceImpl) ValidateToken(ctx context.Context, tokenString string) (string, error) {

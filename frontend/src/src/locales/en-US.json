@@ -100,6 +100,8 @@
     "subtitle": "Enter your credentials to continue",
     "identifier_placeholder": "Email or username",
     "password_placeholder": "Password",
+    "showPassword": "Show password",
+    "hidePassword": "Hide password",
     "forgot_password": "Forgot password?",
     "submit": "Sign In",
     "loading": "Signing in...",

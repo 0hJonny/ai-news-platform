@@ -10,7 +10,6 @@ import {
   getLoginValidationStatus,
   isLoginFormatValid,
   suggestLoginFromName,
-  suggestLoginAlternatives,
 } from '@/utils/loginValidator'
 import type { LoginRuleStatus } from '@/utils/loginValidator'
 import AuthVerificationPanel from '@/components/shared/AuthVerificationPanel.vue'
@@ -65,13 +64,23 @@ const pickLoginSuggestion = (suggestion: string) => {
   login.value = suggestion
 }
 
-// Debounced, cancellable availability check: every new value aborts
-// whatever check is still in flight so a slow early response can't land
-// after a faster later one and show stale availability.
+// Debounced, cancellable Username Suggestion Engine check: every new value
+// aborts whatever check is still in flight so a slow early response can't
+// land after a faster later one and show stale availability/suggestions.
 let availabilityController: AbortController | null = null
 let debounceTimer: ReturnType<typeof setTimeout> | null = null
 
+// Set right before a silent auto-swap (see runAvailabilityCheck below)
+// reassigns `login` itself — lets the watch below no-op for that one
+// assignment instead of re-triggering a check we already just ran.
+let suppressAvailabilityWatch = false
+
 watch(login, (value) => {
+  if (suppressAvailabilityWatch) {
+    suppressAvailabilityWatch = false
+    return
+  }
+
   loginSuggestions.value = []
   availabilityController?.abort()
   if (debounceTimer) clearTimeout(debounceTimer)
@@ -82,14 +91,14 @@ watch(login, (value) => {
   }
 
   loginAvailability.value = 'checking'
-  debounceTimer = setTimeout(() => void runAvailabilityCheck(value), 500)
+  debounceTimer = setTimeout(() => void runAvailabilityCheck(value), 400)
 })
 
 const runAvailabilityCheck = async (value: string) => {
   const controller = new AbortController()
   availabilityController = controller
 
-  const result = await authStore.checkLoginAvailability(value, controller.signal)
+  const result = await authStore.checkUsername(value, controller.signal)
 
   // Stale: superseded by a newer keystroke while this request was in flight.
   if (controller.signal.aborted || login.value !== value) return
@@ -101,10 +110,30 @@ const runAvailabilityCheck = async (value: string) => {
 
   if (result.data.available) {
     loginAvailability.value = 'available'
-  } else {
-    loginAvailability.value = 'taken'
-    loginSuggestions.value = suggestLoginAlternatives(value)
+    return
   }
+
+  // The auto-suggested login (derived from `name`, never touched by the
+  // user) should never surface as "taken" — that's an internal collision
+  // they didn't cause and can't be blamed for. Silently swap in a
+  // DB-verified free alternative instead, so whatever the user actually
+  // sees on the username step is already guaranteed available. Once they
+  // start editing the field themselves (loginTouched), this no longer
+  // applies — a real "taken" + suggestion chips is the right feedback then.
+  if (!loginTouched.value) {
+    const fallback = result.data.suggestions?.[0]
+    if (fallback) {
+      suppressAvailabilityWatch = true
+      login.value = fallback
+      loginAvailability.value = 'available'
+      return
+    }
+  }
+
+  loginAvailability.value = 'taken'
+  // DB-verified by the backend — each one was individually checked
+  // against auth.users before being suggested, not just format-valid.
+  loginSuggestions.value = result.data.suggestions ?? []
 }
 
 const selectedLocale = computed({
