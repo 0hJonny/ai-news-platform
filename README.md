@@ -168,7 +168,7 @@ sequenceDiagram
         P->>R: enqueue parsing.scrape_source(id, url) → parsing_queue
     else 409 Conflict — already known
         N-->>P: existing id
-        Note over P: skip; a whole page of 409s stops pagination
+        Note over P: skip — a whole page of 409s stops pagination
     end
 
     R->>SC: deliver task
