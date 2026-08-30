@@ -15,12 +15,4 @@ export const ENDPOINTS = {
   SESSION_TITLE: (id: string) => `/chats/sessions/${id}/title`,
   SESSION_BY_ID: (id: string) => `/chats/sessions/${id}`,
   SESSION_MESSAGES: (id: string) => `/chats/sessions/${id}/messages`,
-
-  PUBLICATIONS: '/publications',
-  CREATE_PUBLICATION: '/publications',
-  PUBLICATIONS_TOTAL: '/publications_total',
-  LOANS: '/loans',
-  LOANS_TOTAL: '/loans_total',
-  READERS: '/readers',
-  READERS_TOTAL: '/readers_total',
 }
