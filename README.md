@@ -88,6 +88,11 @@ Three different runtimes (Go, Python, Node), five application services, one data
 
 `backend/news` is the older codebase: Gin, GORM, hand-rolled JWT middleware, its own `go.mod`, its own idea of how a database connection works. `backend/core` is the newer one: chi, gRPC, `sqlc`-generated queries, goose migrations, a clean `transport → service → storage → domain` layering.
 
+Historically these were two separate repositories, developed independently.
+They now live side by side in one repo — but the codebases were never merged:
+`backend/news` keeps its own `go.mod`, its own migration history and its own idioms.
+The integration happens at the boundaries, not in the source tree.
+
 The obvious move is to port the news domain into the microservice layout. I didn't, for the usual honest reasons: the monolith **worked**, it owned the schema, and a rewrite would have paid for itself in bugs long before it paid for itself in elegance. Instead it was **integrated as a peer service** — kept intact, given a boundary, and made to look like just another upstream from the outside.
 
 Four decisions made that possible:
@@ -141,7 +146,7 @@ flowchart LR
     before ==>|"integrate, don't rewrite"| after
 ```
 
-What the monolith *did* get was a new **machine-facing API** — but that was additive (`/p/articles/*`, `/p/annotations/*`), written in its own existing idiom, and it replaced a synchronous scraping flow with an asynchronous one. No existing endpoint changed shape.
+What the monolith _did_ get was a new **machine-facing API** — but that was additive (`/p/articles/*`, `/p/annotations/*`), written in its own existing idiom, and it replaced a synchronous scraping flow with an asynchronous one. No existing endpoint changed shape.
 
 ---
 
@@ -189,7 +194,7 @@ sequenceDiagram
 
 ### Details worth calling out
 
-**Draft-first ingest.** The producer reserves a row (`source_link` + language only) *before* anything is fetched. `source_link` is `UNIQUE`, so deduplication is enforced by the database, not by application logic racing itself — and the API answers **409 with the existing id**, not 200 with a flag, because the producer's entire decision hinges on that answer and a status code is much harder to accidentally ignore than a boolean in a body. It also let the crawler drop its "max duplicates" heuristic: a listing page where nothing is new stops pagination, which means the first run against a source goes deep and every run afterwards costs one or two pages.
+**Draft-first ingest.** The producer reserves a row (`source_link` + language only) _before_ anything is fetched. `source_link` is `UNIQUE`, so deduplication is enforced by the database, not by application logic racing itself — and the API answers **409 with the existing id**, not 200 with a flag, because the producer's entire decision hinges on that answer and a status code is much harder to accidentally ignore than a boolean in a body. It also let the crawler drop its "max duplicates" heuristic: a listing page where nothing is new stops pagination, which means the first run against a source goes deep and every run afterwards costs one or two pages.
 
 **Two-tier parsing that survives redesigns.** Title and author come from **schema.org JSON-LD** first (`Article`/`NewsArticle`/`BlogPosting`, including the `@graph` + `@id` reference form most SEO plugins emit), falling back to CSS heuristics only when that yields nothing. This is not premature abstraction — the site's own `article-info__link` / `heading` classes already drifted out from under a redesign while its JSON-LD block didn't. Body text is scoped to the nearest `<article>`/`.content` container rather than a page-wide `<p>` sweep, because the page-wide version cheerfully ingested nav menus and copyright footers.
 
@@ -197,12 +202,12 @@ sequenceDiagram
 
 **Crash-safe queues.** The Celery config is where the operational thinking lives:
 
-| Setting | Why |
-| --- | --- |
-| `task_acks_late=True` | A task leaves the queue when it *finishes*, not when it's picked up — a killed worker's in-flight task is redelivered instead of vanishing. |
-| `worker_prefetch_multiplier=1` | Without it, late-ack still lets a crash lose or duplicate a whole prefetched batch instead of one task. |
-| `task_reject_on_worker_lost=True` | A dead prefork child (segfault, OOM kill) is noticed by its parent and requeued immediately. |
-| `visibility_timeout=300` | The backstop for a whole container disappearing. Redis's default is **1 hour** — far too long for recovery, so it's cut to 5 minutes, still well above any realistic task duration (LLM calls included). |
+| Setting                           | Why                                                                                                                                                                                                      |
+| --------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `task_acks_late=True`             | A task leaves the queue when it _finishes_, not when it's picked up — a killed worker's in-flight task is redelivered instead of vanishing.                                                              |
+| `worker_prefetch_multiplier=1`    | Without it, late-ack still lets a crash lose or duplicate a whole prefetched batch instead of one task.                                                                                                  |
+| `task_reject_on_worker_lost=True` | A dead prefork child (segfault, OOM kill) is noticed by its parent and requeued immediately.                                                                                                             |
+| `visibility_timeout=300`          | The backstop for a whole container disappearing. Redis's default is **1 hour** — far too long for recovery, so it's cut to 5 minutes, still well above any realistic task duration (LLM calls included). |
 
 Redelivery is safe because every write path is an idempotent, upsert-shaped `PATCH` against a known id — a duplicate delivery wastes compute, it doesn't corrupt state.
 
@@ -299,11 +304,11 @@ erDiagram
 
 **Status vocabularies are lookup tables, not enums — but only where they churn.** `articles.parsing_status_id`, `annotations.status_id` and `article_pipeline_log.status_id` all reference small `(id, code, sequence_order, description)` tables. Adding a status is an `INSERT`. Meanwhile `auth.user_role`, `chats.message_role` and `chats.feedback_rating` are left as native Postgres `ENUM`s. The split is on **churn rate**, not on dogma: the pipeline's vocabulary had already needed one full type-recreation migration to narrow itself, while a message's role has been `user | assistant | system` since the day the protocol was written and will stay that way.
 
-**One status column became two, before it had to.** `articles.status` originally described the whole pipeline as a single scalar. That breaks the instant annotation goes multi-language — "done in English, pending in French" does not fit in one column. So `articles.parsing_status_id` was narrowed to describe *parsing only*, and `news.annotations` was promoted from a text-storage table into a **job table**: one row per `(article_id, language_id)`, `UNIQUE`-constrained, with its own status and nullable result columns. Multiple annotation jobs per article now need zero schema or API changes — just more `POST`s.
+**One status column became two, before it had to.** `articles.status` originally described the whole pipeline as a single scalar. That breaks the instant annotation goes multi-language — "done in English, pending in French" does not fit in one column. So `articles.parsing_status_id` was narrowed to describe _parsing only_, and `news.annotations` was promoted from a text-storage table into a **job table**: one row per `(article_id, language_id)`, `UNIQUE`-constrained, with its own status and nullable result columns. Multiple annotation jobs per article now need zero schema or API changes — just more `POST`s.
 
-**The backfill picked the trustworthy signal.** When splitting that column, the old combined `ERROR` was ambiguous: it could mean parsing failed *or* that parsing succeeded and annotation failed. The migration backfills from `body` instead of from the old status — only the parsing task ever writes `body`, so a non-empty one proves parsing finished regardless of what happened downstream. The old status is only consulted for rows that never got that far.
+**The backfill picked the trustworthy signal.** When splitting that column, the old combined `ERROR` was ambiguous: it could mean parsing failed _or_ that parsing succeeded and annotation failed. The migration backfills from `body` instead of from the old status — only the parsing task ever writes `body`, so a non-empty one proves parsing finished regardless of what happened downstream. The old status is only consulted for rows that never got that far.
 
-**Append-only pipeline log + a `DISTINCT ON` view.** A status column tells you *where an article is*; it can't tell you *where it broke and why*. `article_pipeline_log` records every attempt at every stage with its error message and timings, and `article_pipeline_status` collapses it to one row per article with the stage name and status already joined in:
+**Append-only pipeline log + a `DISTINCT ON` view.** A status column tells you _where an article is_; it can't tell you _where it broke and why_. `article_pipeline_log` records every attempt at every stage with its error message and timings, and `article_pipeline_status` collapses it to one row per article with the stage name and status already joined in:
 
 ```sql
 CREATE VIEW news.article_pipeline_status AS
@@ -320,7 +325,7 @@ Debugging a stuck article is one `SELECT`, not a hand-rolled `DISTINCT ON` writt
 
 **Full-text search with RUM, not GIN.** `news.titles` and `news.annotations` carry `rum` indexes over `to_tsvector('simple', ...)`. RUM stores positional information inside the index, so ranked full-text queries don't need a heap re-check for scoring the way GIN does. It ships as a Postgres extension rather than core, which is why `infra/postgres/Dockerfile` extends `postgres:16` with `postgresql-16-rum` — infrastructure following from a schema decision, which is how it should be.
 
-**Audit logging via triggers.** A single `news.log_change()` PL/pgSQL function writes `row_to_json` before/after images into `news.audit_log`, attached to `articles`, `tags`, `article_tags` and `annotations`. It captures changes made by *anything* — the Go API, a Celery worker, or somebody in psql at 2am — because it lives below all of them.
+**Audit logging via triggers.** A single `news.log_change()` PL/pgSQL function writes `row_to_json` before/after images into `news.audit_log`, attached to `articles`, `tags`, `article_tags` and `annotations`. It captures changes made by _anything_ — the Go API, a Celery worker, or somebody in psql at 2am — because it lives below all of them.
 
 **Partial and covering indexes matched to actual queries.** `idx_users_email WHERE email IS NOT NULL` (anonymous users have none), `idx_sessions_user_active WHERE deleted_at IS NULL` (the sidebar never wants deleted chats), `idx_messages_session_time (session_id, created_at ASC)` (exactly how history is read), `ix_articles_parsing_status_id` (the pipeline's core "give me everything in state X" access pattern — load-bearing from day one, not a later optimisation).
 
@@ -365,7 +370,7 @@ Notable pieces:
 - **Pluggable LLM provider.** `LLM_PROVIDER` switches between Ollama and any OpenAI-compatible endpoint (LM Studio is the configured default). Everything runs locally; no third-party inference API is required.
 - **Conversation state lives in Postgres twice, on purpose.** LangGraph checkpoints its own execution state to Postgres, while durable chat history — sessions, messages, feedback — is owned by the Go `chats` service. The agent calls `chats` over HTTP to persist messages rather than writing to those tables itself, so the schema has exactly one owner.
 - **Langfuse tracing.** Each assistant message stores its `trace_id`, so a thumbs-down in the UI maps to the exact graph execution that produced it.
-- **Identity is never self-asserted.** The agent trusts only the `X-User-Id` header, which the gateway sets *after* validating the JWT, and validates it parses as a UUID before doing anything with it.
+- **Identity is never self-asserted.** The agent trusts only the `X-User-Id` header, which the gateway sets _after_ validating the JWT, and validates it parses as a UUID before doing anything with it.
 
 ---
 
@@ -397,7 +402,7 @@ sequenceDiagram
     end
 ```
 
-**Failure codes are part of the contract.** Both rejections are `401` — this is authentication failing, not authorization, and the HTTP status should say so. The *distinction* is carried in a machine-readable `error.code`, and the frontend acts on it differently: `TOKEN_EXPIRED` prompts a re-login; `TOKEN_INVALID` means a token that was never legitimately issued, so client-side auth state is wiped entirely. A bare `401` with no code is neither, and deliberately does **not** raise the session-expired modal — a false positive there is worse than a missing one.
+**Failure codes are part of the contract.** Both rejections are `401` — this is authentication failing, not authorization, and the HTTP status should say so. The _distinction_ is carried in a machine-readable `error.code`, and the frontend acts on it differently: `TOKEN_EXPIRED` prompts a re-login; `TOKEN_INVALID` means a token that was never legitimately issued, so client-side auth state is wiped entirely. A bare `401` with no code is neither, and deliberately does **not** raise the session-expired modal — a false positive there is worse than a missing one.
 
 **One validation contract, three consumers.** The login/username format lives in `shared/auth/login-rules.json` as a single JSON file, mounted into the `auth` container and aliased as `@shared` in the frontend's Vite config — and mirrored by a `CHECK` constraint in Postgres. Same rule, enforced at the edge for UX, in the service for correctness, and in the database as the actual invariant, with no risk of the three drifting into disagreement.
 
@@ -413,14 +418,14 @@ cp .env.example .env      # fill in credentials, pick an LLM provider
 docker compose up --build
 ```
 
-| Service | URL |
-| --- | --- |
-| Frontend | http://localhost:3001 |
+| Service                       | URL                   |
+| ----------------------------- | --------------------- |
+| Frontend                      | http://localhost:3001 |
 | Gateway (the only public API) | http://localhost:8080 |
-| PgAdmin | http://localhost:5050 |
-| MinIO console | http://localhost:9001 |
-| ChromaDB | http://localhost:8001 |
-| Postgres | `localhost:55432` |
+| PgAdmin                       | http://localhost:5050 |
+| MinIO console                 | http://localhost:9001 |
+| ChromaDB                      | http://localhost:8001 |
+| Postgres                      | `localhost:55432`     |
 
 Startup order is enforced by health checks, not by `sleep`: `postgres` → `migrate` (runs to completion) → `auth` / `chats` / `news` / `agent` → `gateway` → `frontend`.
 
@@ -436,7 +441,7 @@ An LLM endpoint is expected on the host (Ollama on `:11434` or LM Studio on `:12
 <details>
 <summary><b>One health check worth reading</b> — ChromaDB's image ships neither <code>curl</code> nor <code>python3</code></summary>
 
-Chroma's core is a compiled Rust binary now, and the image's entrypoint is just `dumb-init` plus that binary — so the usual `curl -f` health check has nothing to run. It *is* a Debian base with the standard toolchain, so the check opens a raw socket with Perl's core `IO::Socket::INET` and looks for an HTTP 200 on `/api/v2/heartbeat` (`v1` now returns 410). Every `$` is doubled: Compose interpolates `$VAR` in *any* compose-file string regardless of YAML quoting, so an unescaped `$s` silently becomes an empty string before Perl ever sees it.
+Chroma's core is a compiled Rust binary now, and the image's entrypoint is just `dumb-init` plus that binary — so the usual `curl -f` health check has nothing to run. It _is_ a Debian base with the standard toolchain, so the check opens a raw socket with Perl's core `IO::Socket::INET` and looks for an HTTP 200 on `/api/v2/heartbeat` (`v1` now returns 410). Every `$` is doubled: Compose interpolates `$VAR` in _any_ compose-file string regardless of YAML quoting, so an unescaped `$s` silently becomes an empty string before Perl ever sees it.
 
 </details>
 
@@ -483,6 +488,7 @@ Honest about what's finished and what isn't:
 **Working:** the full Compose stack with ordered migrations; auth (register / login / anonymous) through the gateway; chat sessions, streaming answers and feedback; the public article read API; the draft → parse → annotate pipeline end to end with per-stage logging.
 
 **Next:**
+
 - **Close the RAG loop.** The agent reads from ChromaDB, but nothing writes annotated articles into it yet — an indexer between the annotation worker and the vector store is the missing link that turns two good subsystems into one product.
 - **Multi-language annotation.** The schema and ingest API already support it (`annotations` is one job per `(article, language)`); the worker currently runs `annotate()` only, leaving the existing `translate` / `categorize` / `extract_tags` model methods unused.
 - **Automatic retries** driven by `article_pipeline_log` — the failure history needed to do it intelligently is already being recorded.
