@@ -1,0 +1,19 @@
+# Local git hook, run on `git commit` — install once per clone with:
+#   pip install pre-commit && pre-commit install
+#
+# Scoped to workers/{parser,annotation,agent} via `files:` because this is
+# a monorepo (Go + Vue live here too, each with their own lint story — see
+# each worker has its own pyproject.toml (own line-length);
+# per-file-ignores, known-first-party — they're independent Docker build
+# contexts, not one shared package), ruff picks whichever is nearest the
+# file being linted. Same version pinned here as in each worker's
+# requirements-dev.txt, so local `ruff` runs and this hook agree.
+repos:
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.16.6
+    hooks:
+      - id: ruff-check
+        files: ^workers/(parser|annotation|agent)/
+        args: [--fix]
+      - id: ruff-format
+        files: ^workers/(parser|annotation|agent)/

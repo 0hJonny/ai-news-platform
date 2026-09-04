@@ -1,6 +1,8 @@
+from models import ArticleAnnotation
+
 from .GenerationModel import GenerationModel
 from .GenerationResponse import GenerationResponse
-from models import ArticleAnnotation
+
 
 class Gemma_7b(GenerationModel):
     def __init__(self):
@@ -10,10 +12,9 @@ class Gemma_7b(GenerationModel):
             "stream": False,  # Placeholder for stream option
             "options": {
                 "temperature": 0.1,  # Placeholder for temperature option
-                "top_p": 0.9
-            }
+                "top_p": 0.9,
+            },
         }
-    
 
     def annotate(self, article: ArticleAnnotation, stream=None, options=None) -> ArticleAnnotation:
         prompt = """
@@ -45,18 +46,16 @@ class Gemma_7b(GenerationModel):
 
         answer = answer.message["content"]
 
-        index = answer.find('###')
+        index = answer.find("###")
 
         if index != -1:
             answer = answer[index:]
         article.annotation = answer
-        
 
         article.add_neural_network("annotator", self.model_name)
-        
+
         return article
 
-        
     def translate(self, article: ArticleAnnotation, stream=None, options=None) -> ArticleAnnotation:
         prompt = """
             Translate article title to %s language. Safe the structure.
@@ -75,7 +74,7 @@ class Gemma_7b(GenerationModel):
             %s
             '''
             """
-            
+
         if article.annotation is None:
             raise Exception("Annotation is None. Write annotation before translating.")
 
@@ -86,9 +85,9 @@ class Gemma_7b(GenerationModel):
         article.annotation = answer.message["content"]
 
         article.add_neural_network("translator", self.model_name)
-        
+
         return article
-        
+
     def categorize(self, article: ArticleAnnotation, stream=None, options=None) -> ArticleAnnotation:
         prompt = """
             Article:
@@ -120,7 +119,7 @@ class Gemma_7b(GenerationModel):
             article.theme_name = None
 
         return article
-        
+
     def extract_tags(self, article: ArticleAnnotation, stream=None, options=None) -> ArticleAnnotation:
         prompt = """
             Article:
@@ -135,13 +134,12 @@ class Gemma_7b(GenerationModel):
             """
         prompt = prompt % (article.title, article.body)
         # print(prompt)
-    
+
         answer: GenerationResponse = self._generate_text(prompt=prompt, stream=stream, options=options)
         print(answer)
 
         # Remove the square brackets from the string
         tags = answer.message["content"].strip("[]")
-
 
         # Split the string by comma to get individual tags
         tags_list = tags.split(", ")

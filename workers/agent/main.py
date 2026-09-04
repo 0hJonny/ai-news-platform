@@ -1,19 +1,19 @@
-from contextlib import asynccontextmanager
 import asyncio
 import logging
-from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
+from contextlib import asynccontextmanager
 
-from api.router import api_v1_router 
+from fastapi import FastAPI
+
 from api.health import router as health_router
-from utils.logging_config import setup_logging
-from storage.postgres_saver import create_postgres_checkpointer
-from storage.chroma_client import get_chroma_vectorstore
+from api.router import api_v1_router
 from core.graph import init_agent_app
-from core.config import settings
 from core.postgres import db_pool
+from storage.chroma_client import get_chroma_vectorstore
+from storage.postgres_saver import create_postgres_checkpointer
+from utils.logging_config import setup_logging
 
 logger = logging.getLogger(__name__)
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -43,6 +43,7 @@ async def lifespan(app: FastAPI):
         await db_pool.close()
         logger.info("Shutting down, pools closed.")
 
+
 app = FastAPI(lifespan=lifespan)
 
 # origins = [o.strip() for o in settings.cors_origins.split(",") if o.strip()]
@@ -59,4 +60,5 @@ app.include_router(api_v1_router)
 
 if __name__ == "__main__":
     import uvicorn
+
     uvicorn.run("main:app", host="0.0.0.0", port=8082, reload=True)

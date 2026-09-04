@@ -1,12 +1,15 @@
 import logging
+
 from .state import AgentState
 
 logger = logging.getLogger(__name__)
+
 
 def route_after_classification(state: AgentState) -> str:
     if state.get("intent") in ["chitchat", "capabilities"]:
         return "simple_response"
     return "internal_search"
+
 
 def route_after_evaluation(state: AgentState) -> str:
     if state.get("is_sufficient"):

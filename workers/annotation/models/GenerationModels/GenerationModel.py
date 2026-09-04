@@ -1,6 +1,9 @@
 import requests
-from .GenerationResponse import GenerationResponse
+
 from models import ArticleAnnotation
+
+from .GenerationResponse import GenerationResponse
+
 
 class GenerationModel:
     def __init__(self):
@@ -10,8 +13,8 @@ class GenerationModel:
             "stream": False,  # Placeholder for stream option
             "options": {
                 "temperature": 0.8,  # Placeholder for temperature option
-                "repeat_penalty": 1.0  # Placeholder for repeat_penalty option
-            }
+                "repeat_penalty": 1.0,  # Placeholder for repeat_penalty option
+            },
         }
 
     def set_api_url(self, api_url: str):
@@ -20,33 +23,38 @@ class GenerationModel:
 
     def __str__(self):
         return self.model_name
-    
+
     def annotate(self, article: ArticleAnnotation, stream=False, options=None) -> ArticleAnnotation:
-        raise NotImplementedError(f"Метод generate_text должен быть реализован в подклассе вашей модели, {self.model_name}.")
-    
+        raise NotImplementedError(
+            f"Метод generate_text должен быть реализован в подклассе вашей модели, {self.model_name}."
+        )
+
     def translate(self, article: ArticleAnnotation, stream=False, options=None) -> ArticleAnnotation:
-        raise NotImplementedError(f"Метод translate должен быть реализован в подклассе вашей модели, {self.model_name}.")
+        raise NotImplementedError(
+            f"Метод translate должен быть реализован в подклассе вашей модели, {self.model_name}."
+        )
 
     def categorize(self, article: ArticleAnnotation, stream=False, options=None) -> ArticleAnnotation:
-        raise NotImplementedError(f"Метод categorize должен быть реализован в подклассе вашей модели, {self.model_name}.")
-    
+        raise NotImplementedError(
+            f"Метод categorize должен быть реализован в подклассе вашей модели, {self.model_name}."
+        )
+
     def extract_tags(self, article: ArticleAnnotation, stream=False, options=None) -> ArticleAnnotation:
-        raise NotImplementedError(f"Метод extract_tags должен быть реализован в подклассе вашей модели, {self.model_name}.")
-    
+        raise NotImplementedError(
+            f"Метод extract_tags должен быть реализован в подклассе вашей модели, {self.model_name}."
+        )
+
     def _generate_text(self, prompt: str, stream=None, options=None) -> GenerationResponse:
         if stream is None:
             stream = self.data["stream"]
         if options is None:
             options = self.data["options"]
 
-
         data = {
             "model": self.model_name,
-            "messages": [
-                { "role": "user", "content": prompt }
-            ],
+            "messages": [{"role": "user", "content": prompt}],
             "stream": stream,
-            "options": options
+            "options": options,
         }
         try:
             response = requests.post(f"{self.api_url}/api/chat", json=data)

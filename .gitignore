@@ -12,6 +12,7 @@ Thumbs.db
 !.vscode/launch.json
 !.vscode/tasks.json
 **/__pycache__
+.ruff_cache/
 
 # Secrets / local env overrides — never commit a real .env, only .env.example
 .env

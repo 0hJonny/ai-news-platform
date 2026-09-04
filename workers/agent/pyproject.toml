@@ -1,0 +1,21 @@
+[tool.ruff]
+target-version = "py311"
+line-length = 110
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
+
+[tool.ruff.lint.per-file-ignores]
+# LLM prompt/system-message strings — line length here is about readable
+# prompt text, not something wrapping would improve.
+"agent/nodes.py" = ["E501"]
+
+[tool.ruff.lint.flake8-bugbear]
+# B008 ("no function calls in argument defaults") doesn't know FastAPI's
+# Depends(...)-in-default-argument is the framework's actual dependency
+# injection mechanism, not an accidental mutable-default footgun — without
+# this it flags every route handler in api/.
+extend-immutable-calls = ["fastapi.Depends", "fastapi.params.Depends"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["agent", "api", "core", "repositories", "shared_types", "storage", "utils"]

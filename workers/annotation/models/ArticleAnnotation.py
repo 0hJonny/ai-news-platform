@@ -1,5 +1,6 @@
 from dataclasses import dataclass, field
 
+
 @dataclass
 class ArticleAnnotation:
     id: str
@@ -17,7 +18,8 @@ class ArticleAnnotation:
 
     def check_article_annotation_error(self):
         """Check if the article annotation is valid."""
-        if self.title == self.title_orig and self.language_to_answer_code != self.language_code or self.title == "":
+        same_title = self.title == self.title_orig and self.language_to_answer_code != self.language_code
+        if same_title or self.title == "":
             return "Title is None"
         if self.body is None:
             return "Body is None"
@@ -29,7 +31,7 @@ class ArticleAnnotation:
             return "Language to answer name is None"
         if self.theme_name is None and not self.has_annotation:
             return "Theme name is None"
-        if (self.tags is None or self.tags == ['']) and not self.has_annotation:
+        if (self.tags is None or self.tags == [""]) and not self.has_annotation:
             return "Tags is None"
         if self.annotation is None:
             return "Annotation is None"
@@ -37,14 +39,13 @@ class ArticleAnnotation:
             return "Neural networks is None"
         return None
 
-
     def add_tag(self, tag: str):
         """Add a tag to the article."""
         if len(tag) <= 20 and not self.tags:
             if self.tags is None:
                 self.tags = []
             self.tags.append(tag)
-            
+
         elif len(tag) <= 20 and tag not in self.tags:
             self.tags.append(tag)
 
@@ -67,5 +68,5 @@ class ArticleAnnotation:
             tags=json_data.get("tags", []),
             annotation=json_data.get("annotation"),
             neural_networks=json_data.get("neural_networks", {}),
-            has_annotation=json_data.get("has_annotation", False)
+            has_annotation=json_data.get("has_annotation", False),
         )

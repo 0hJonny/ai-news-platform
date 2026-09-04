@@ -1,7 +1,10 @@
 from functools import lru_cache
-from langchain_openai import ChatOpenAI
+
 from langchain_ollama import ChatOllama
+from langchain_openai import ChatOpenAI
+
 from core.config import settings
+
 
 @lru_cache(maxsize=1)
 def get_llm():

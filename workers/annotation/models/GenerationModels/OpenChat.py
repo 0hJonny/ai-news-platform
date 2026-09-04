@@ -1,6 +1,8 @@
+from models import ArticleAnnotation
+
 from .GenerationModel import GenerationModel
 from .GenerationResponse import GenerationResponse
-from models import ArticleAnnotation
+
 
 class OpenChat(GenerationModel):
     def __init__(self):
@@ -10,10 +12,9 @@ class OpenChat(GenerationModel):
             "stream": False,  # Placeholder for stream option
             "options": {
                 "temperature": 0.8,  # Placeholder for temperature option
-                "top_p": 0.9
-            }
+                "top_p": 0.9,
+            },
         }
-    
 
     def annotate(self, article: ArticleAnnotation, stream=None, options=None) -> ArticleAnnotation:
         prompt = """
@@ -42,20 +43,19 @@ class OpenChat(GenerationModel):
         prompt = prompt % (article.title, article.body)
 
         answer: GenerationResponse = self._generate_text(prompt=prompt, stream=stream, options=options)
-        
+
         answer = answer.message["content"]
 
-        index = answer.find('###')
+        index = answer.find("###")
 
         if index != -1:
             answer = answer[index:]
         article.annotation = answer
-        
+
         article.neural_networks["annotator"] = self.model_name
-        
+
         return article
 
-        
     def translate(self, article: ArticleAnnotation, stream=None, options=None) -> ArticleAnnotation:
         prompt = """
             Translate article title to %s language. Safe the structure.
@@ -74,7 +74,7 @@ class OpenChat(GenerationModel):
             %s
             '''
             """
-            
+
         if article.annotation is None:
             raise Exception("Annotation is None. Write annotation before translating.")
 
@@ -85,9 +85,9 @@ class OpenChat(GenerationModel):
         article.annotation = answer.message["content"]
 
         article.neural_networks["translator"] = self.model_name
-        
+
         return article
-        
+
     def categorize(self, article: ArticleAnnotation, stream=None, options=None) -> ArticleAnnotation:
         prompt = """
             Article:
@@ -103,15 +103,17 @@ class OpenChat(GenerationModel):
             Write only one the topic!.
             """
         prompt = prompt % (article.title, article.body)
-        
+
         answer = self._generate_text(prompt=prompt, stream=stream, options=options)
-        
-        article.theme_name = answer.message["content"].lower().replace('*', '').replace(' ', '').replace('\n', '')
+
+        article.theme_name = (
+            answer.message["content"].lower().replace("*", "").replace(" ", "").replace("\n", "")
+        )
 
         ## TODO CHECK FOR THEMES CLASSIFY
-        
+
         return article
-        
+
     def extract_tags(self, article: ArticleAnnotation, stream=None, options=None) -> ArticleAnnotation:
         prompt = """
             Article:
@@ -125,10 +127,17 @@ class OpenChat(GenerationModel):
             Example: Tags must has one or two words of main points of the Article.
             """
         prompt = prompt % (article.title, article.body)
-    
+
         answer: GenerationResponse = self._generate_text(prompt=prompt, stream=stream, options=options)
 
-        tag_list = answer.message["content"].replace("[", "").replace("]", "").replace("'", "").replace(' ', '').split(',')
+        tag_list = (
+            answer.message["content"]
+            .replace("[", "")
+            .replace("]", "")
+            .replace("'", "")
+            .replace(" ", "")
+            .split(",")
+        )
         [article.add_tag(tag.capitalize()) for tag in tag_list]
 
         return article

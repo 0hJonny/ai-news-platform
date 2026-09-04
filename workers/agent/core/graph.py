@@ -1,8 +1,11 @@
 import logging
+
 from langgraph.checkpoint.postgres.aio import AsyncPostgresSaver
+
 from agent.workflow import build_agent_workflow
 
 logger = logging.getLogger(__name__)
+
 
 async def init_agent_app(checkpointer: AsyncPostgresSaver):
     """

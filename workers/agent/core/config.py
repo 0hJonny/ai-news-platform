@@ -1,5 +1,6 @@
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+
 class Settings(BaseSettings):
     llm_provider: str = "ollama"
     ollama_base_url: str = "http://localhost:11434/v1"
@@ -22,7 +23,7 @@ class Settings(BaseSettings):
 
     cors_origins: str = "http://localhost:3000"
     max_context_tokens: int = 3000
-    
+
     go_chat_service: str = "http://go:8083/api/v1"
 
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")

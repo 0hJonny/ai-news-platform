@@ -1,7 +1,8 @@
 # shared_types/constants.py
-from enum import Enum
+from enum import StrEnum
 
-class StepCode(str, Enum):
+
+class StepCode(StrEnum):
     INIT = "init"
     CLASSIFYING = "classifying_intent"
     INTENT_CHITCHAT = "intent_chitchat"

@@ -1,0 +1,18 @@
+[tool.ruff]
+target-version = "py311"
+line-length = 110
+
+[tool.ruff.lint]
+# E/F: pycodestyle+pyflakes (ruff's own baseline) · I: import sorting ·
+# UP: pyupgrade (modern syntax, e.g. flags old-style typing.Optional over
+# `X | None`, which this codebase already uses) · B: bugbear (common
+# correctness footguns, e.g. mutable default args).
+select = ["E", "F", "I", "UP", "B"]
+
+[tool.ruff.lint.isort]
+# `shared/` is only physically present under workers/parser/shared at
+# container runtime (docker-compose bind-mounts ../workers/shared there —
+# see infra/docker-compose.yml); on disk here it lives one level up as a
+# sibling of this package. Without this, ruff can't tell it's local code
+# and sorts it away from `parsers` instead of alongside it.
+known-first-party = ["parsers", "shared"]

@@ -1,7 +1,7 @@
 import os
 
-from models.GenerationModels import GenerationModel
 from models import ArticleAnnotation
+from models.GenerationModels import GenerationModel
 
 
 class ArticleService:
@@ -19,27 +19,33 @@ class ArticleService:
         model.set_api_url(cls.api_ollama_url)
 
     @classmethod
-    def annotate(cls, article: ArticleAnnotation, model: GenerationModel = GenerationModel) -> ArticleAnnotation:
+    def annotate(
+        cls, article: ArticleAnnotation, model: GenerationModel = GenerationModel
+    ) -> ArticleAnnotation:
         """Annotate an article using a GenerationModel instance."""
         cls._set_api_url(model)
         return model.annotate(article)
 
     @classmethod
-    def translate(cls, article: ArticleAnnotation, model: GenerationModel = GenerationModel) -> ArticleAnnotation:
+    def translate(
+        cls, article: ArticleAnnotation, model: GenerationModel = GenerationModel
+    ) -> ArticleAnnotation:
         """Translate an article using a GenerationModel instance."""
         cls._set_api_url(model)
         return model.translate(article)
 
     @classmethod
-    def extract_tags(cls, article: ArticleAnnotation, model: GenerationModel = GenerationModel) -> ArticleAnnotation:
+    def extract_tags(
+        cls, article: ArticleAnnotation, model: GenerationModel = GenerationModel
+    ) -> ArticleAnnotation:
         """Extract tags from an article using a GenerationModel instance."""
         cls._set_api_url(model)
         return model.extract_tags(article)
 
     @classmethod
-    def categorize(cls, article: ArticleAnnotation, model: GenerationModel = GenerationModel) -> ArticleAnnotation:
+    def categorize(
+        cls, article: ArticleAnnotation, model: GenerationModel = GenerationModel
+    ) -> ArticleAnnotation:
         """Categorize an article using a GenerationModel instance."""
         cls._set_api_url(model)
         return model.categorize(article=article)
-
-

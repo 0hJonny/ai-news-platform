@@ -1,25 +1,27 @@
 import logging
-from langgraph.graph import StateGraph, END
 
-from agent.state import AgentState
+from langgraph.graph import END, StateGraph
+
 from agent.nodes import (
     classify_intent_node,
-    simple_response_node,
-    internal_search_node,
     evaluate_node,
-    reformulate_node,
-    web_search_node,
-    synthesize_node,
     fact_check_node,
     finalize_node,
+    internal_search_node,
+    reformulate_node,
+    simple_response_node,
+    synthesize_node,
+    web_search_node,
 )
 from agent.routing import (
     route_after_classification,
     route_after_evaluation,
     route_after_fact_check,
 )
+from agent.state import AgentState
 
 logger = logging.getLogger(__name__)
+
 
 def build_agent_workflow() -> StateGraph:
     """Builds the state graph with all nodes and edges (infrastructure-agnostic)."""
@@ -42,25 +44,21 @@ def build_agent_workflow() -> StateGraph:
     workflow.add_conditional_edges(
         "classify_intent",
         route_after_classification,
-        {"simple_response": "simple_response", "internal_search": "internal_search"}
+        {"simple_response": "simple_response", "internal_search": "internal_search"},
     )
     workflow.add_edge("simple_response", END)
 
     workflow.add_edge("internal_search", "evaluate")
     workflow.add_conditional_edges(
-        "evaluate",
-        route_after_evaluation,
-        {"synthesize": "synthesize", "reformulate": "reformulate"}
+        "evaluate", route_after_evaluation, {"synthesize": "synthesize", "reformulate": "reformulate"}
     )
-    
+
     workflow.add_edge("reformulate", "web_search")
     workflow.add_edge("web_search", "evaluate")
     workflow.add_edge("synthesize", "fact_check")
-    
+
     workflow.add_conditional_edges(
-        "fact_check",
-        route_after_fact_check,
-        {"synthesize": "synthesize", "finalize": "finalize"}
+        "fact_check", route_after_fact_check, {"synthesize": "synthesize", "finalize": "finalize"}
     )
     workflow.add_edge("finalize", END)
 

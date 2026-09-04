@@ -1,0 +1,56 @@
+# hadolint checks every Dockerfile in the repo for the usual best-practice
+# footguns (unpinned versions, missing --no-install-recommends, etc.) —
+# static analysis only, no image is ever built here (see the PR discussion
+# on why a real `docker build` isn't in CI: workers/agent's ML dependency
+# stack makes that too slow/heavy to run on every push).
+#
+# --failure-threshold error: this is hadolint's first rollout in the repo,
+# and the existing Dockerfiles already carry a handful of pre-existing
+# `warning`/`info` findings (mostly "pin this version") across parts of the
+# repo nobody's touched yet. Failing the build on those now would block
+# unrelated PRs over something that was already true before this workflow
+# existed. Warnings still show up in the log — worth tightening to `warning`
+# once those are cleaned up.
+name: Lint Dockerfiles
+
+on:
+  push:
+    paths:
+      - "**/Dockerfile"
+      - "**/Dockerfile.*"
+      - "**/dockerfile*"
+      - ".github/workflows/lint-docker.yml"
+  pull_request:
+    paths:
+      - "**/Dockerfile"
+      - "**/Dockerfile.*"
+      - "**/dockerfile*"
+      - ".github/workflows/lint-docker.yml"
+
+permissions:
+  contents: read
+
+env:
+  HADOLINT_VERSION: "2.15.1"
+
+jobs:
+  hadolint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Install hadolint
+        run: |
+          curl -sL -o /usr/local/bin/hadolint \
+            "https://github.com/hadolint/hadolint/releases/download/v${HADOLINT_VERSION}/hadolint-linux-x86_64"
+          chmod +x /usr/local/bin/hadolint
+
+      - name: Lint every Dockerfile (excluding infra/archive — deprecated)
+        run: |
+          status=0
+          while IFS= read -r -d '' file; do
+            echo "::group::$file"
+            hadolint --failure-threshold error "$file" || status=1
+            echo "::endgroup::"
+          done < <(find . \( -iname "Dockerfile*" -o -iname "dockerfile*" \) -not -path "*/infra/archive/*" -print0)
+          exit $status

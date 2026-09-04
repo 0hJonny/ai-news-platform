@@ -1,0 +1,48 @@
+# backend/core and backend/news are two independent Go modules (different
+# go.mod, different Go toolchain versions — see each module's own go.mod)
+# that happen to live in one repo. Matrix instead of one shared job so each
+# gets its own go-version-file and its own golangci-lint run against its
+# own .golangci.yml.
+name: Lint Go backend
+
+on:
+  push:
+    paths:
+      - "backend/**"
+      - ".github/workflows/lint-backend.yml"
+  pull_request:
+    paths:
+      - "backend/**"
+      - ".github/workflows/lint-backend.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  go:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        module: [core, news]
+    defaults:
+      run:
+        working-directory: backend/${{ matrix.module }}
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-go@v7
+        with:
+          go-version-file: backend/${{ matrix.module }}/go.mod
+
+      - name: go build
+        run: go build ./...
+
+      - name: go vet
+        run: go vet ./...
+
+      - name: golangci-lint
+        uses: golangci/golangci-lint-action@v9
+        with:
+          version: v2.13
+          working-directory: backend/${{ matrix.module }}

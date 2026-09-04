@@ -1,4 +1,5 @@
 from psycopg_pool import AsyncConnectionPool
+
 from core.config import settings
 
 db_pool = AsyncConnectionPool(

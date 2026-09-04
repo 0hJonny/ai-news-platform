@@ -23,6 +23,9 @@ import os
 
 import requests
 
+from models import ArticleAnnotation
+from models.GenerationModels import Gemma_4b_e4b
+from services import ArticleService
 from shared.celery_app import app
 from shared.statuses import (
     ANNOTATION_DONE,
@@ -32,9 +35,6 @@ from shared.statuses import (
     EVENT_SUCCEEDED,
     STAGE_ANNOTATION,
 )
-from models import ArticleAnnotation
-from services import ArticleService
-from models.GenerationModels import Gemma_4b_e4b
 
 logger = logging.getLogger(__name__)
 
@@ -109,7 +109,9 @@ def annotate_article(article_id: str, annotation_id: str):
 
     if data is None:
         _patch_annotation(annotation_id, status=ANNOTATION_ERROR)
-        _log_stage(article_id, EVENT_FAILED, "Failed to fetch the article from the Go API", language_id=language_id)
+        _log_stage(
+            article_id, EVENT_FAILED, "Failed to fetch the article from the Go API", language_id=language_id
+        )
         return
 
     if not data.get("body"):

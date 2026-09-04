@@ -1,0 +1,49 @@
+# Backstop for .pre-commit-config.yaml — catches it if someone commits
+# without the local hook installed (or with --no-verify). Same ruff
+# version as pinned in each worker's requirements-dev.txt and
+# .pre-commit-config.yaml, kept in sync by hand for now.
+#
+# Matrix instead of one shared job because each worker is an independent
+# Docker build context with its own pyproject.toml (own line-length,
+# per-file-ignores, known-first-party) — see workers/{parser,annotation,agent}/pyproject.toml.
+name: Lint Python workers
+
+on:
+  push:
+    paths:
+      - "workers/parser/**"
+      - "workers/annotation/**"
+      - "workers/agent/**"
+      - ".github/workflows/lint-python-workers.yml"
+  pull_request:
+    paths:
+      - "workers/parser/**"
+      - "workers/annotation/**"
+      - "workers/agent/**"
+      - ".github/workflows/lint-python-workers.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  ruff:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        worker: [parser, annotation, agent]
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: ruff check
+        uses: astral-sh/ruff-action@v3
+        with:
+          version: "0.16.6"
+          src: "workers/${{ matrix.worker }}"
+
+      - name: ruff format --check
+        uses: astral-sh/ruff-action@v3
+        with:
+          version: "0.16.6"
+          src: "workers/${{ matrix.worker }}"
+          args: "format --check"

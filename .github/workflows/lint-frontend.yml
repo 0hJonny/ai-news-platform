@@ -1,0 +1,42 @@
+# only frontend/src is the active app — Web-site/ is deprecated
+# legacy, deliberately not linted/built here.
+name: Lint frontend
+
+on:
+  push:
+    paths:
+      - "frontend/src/**"
+      - ".github/workflows/lint-frontend.yml"
+  pull_request:
+    paths:
+      - "frontend/src/**"
+      - ".github/workflows/lint-frontend.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  frontend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend/src
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: frontend/src/package.json
+          cache: npm
+          cache-dependency-path: frontend/src/package-lock.json
+
+      - run: npm ci
+
+      - run: npm run lint
+
+      # vue-tsc catches type errors ESLint doesn't (cross-component prop
+      # types, template expression types) — worth its own step so a
+      # type-check failure isn't lost in the lint step's output.
+      - run: npm run type-check
+
+      - run: npm run build

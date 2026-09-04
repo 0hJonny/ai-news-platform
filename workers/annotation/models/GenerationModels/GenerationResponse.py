@@ -1,13 +1,13 @@
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Dict, Any
+from typing import Any
 
 
 @dataclass
 class GenerationResponse:
     model: str
     created_at: datetime
-    message: Dict[str, Any]
+    message: dict[str, Any]
     done: bool
     total_duration: int
     load_duration: int
@@ -16,7 +16,7 @@ class GenerationResponse:
     eval_duration: int
 
     @classmethod
-    def from_json(cls, data: Dict[str, Any]) -> 'GenerationResponse':
+    def from_json(cls, data: dict[str, Any]) -> "GenerationResponse":
         """
         A constructor method that creates an instance of the class from a dictionary.
 
@@ -37,5 +37,3 @@ class GenerationResponse:
             eval_count=data.get("eval_count", 1),
             eval_duration=data["eval_duration"],
         )
-
-

@@ -1,2 +1,1 @@
-from .ArticleService import ArticleService
-from .Logger import Logger
+from .ArticleService import ArticleService as ArticleService
