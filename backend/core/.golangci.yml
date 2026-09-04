@@ -8,10 +8,10 @@ run:
 
 # Output settings
 output:
-  text:
-    format: colored-line-number
-    print-issued-lines: true
-    print-linter-name: true
+  formats:
+    text:
+      print-issued-lines: true
+      print-linter-name: true
 
 # Code formatter settings (separate section in v2)
 formatters:
@@ -19,7 +19,8 @@ formatters:
     - goimports
   settings:
     goimports:
-      local-prefixes: github.com/0hJonny/langfuse-agents
+      local-prefixes:
+        - github.com/0hJonny/langfuse-agents
 
 # Single block controlling linters and their settings
 linters:
@@ -68,15 +69,17 @@ linters:
       enable:
         - fieldalignment
 
-# Exclusions (what not to check)
-issues:
-  exclude-rules:
-    # Skip the revive linter for tests
-    - path: _test\.go
-      linters:
-        - revive
-    # Skip gosec warnings about weak randomizers in tests
-    - path: _test\.go
-      text: "G404:"
-      linters:
-        - gosec
+  # Exclusions (what not to check) — moved under linters.exclusions in the
+  # v2 schema; `issues.exclude-rules` (still shown in some older docs/
+  # examples) was removed and now fails `golangci-lint config verify`.
+  exclusions:
+    rules:
+      # Skip the revive linter for tests
+      - path: _test\.go
+        linters:
+          - revive
+      # Skip gosec warnings about weak randomizers in tests
+      - path: _test\.go
+        text: "G404:"
+        linters:
+          - gosec
