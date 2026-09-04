@@ -15,12 +15,20 @@ RUN apt-get update && apt-get -y install cron \
     && pip install --no-cache-dir -r /app/requirements.txt \
     && rm -rf /root/.cache/pip /var/cache/apt/*
 
-# Copy the cronjob file to the /etc/cron.d/ directory and set permissions
-# (kept for reference / manual use — `cron -f` still works if you override
-# CMD — but Stage 5's default is the Celery worker below instead of the
-# old scheduled full-scrape run.)
+# Copy the cronjob file to the /etc/cron.d/ directory and set permissions.
+# Inert in the default `parser` service (its CMD below is the Celery
+# worker, not cron) — it only actually runs in the `parser-producer`
+# service (infra/docker-compose.yml), which overrides CMD with `cron -f`.
 COPY cronjob /etc/cron.d/cronjob
 RUN chmod 0644 /etc/cron.d/cronjob
+
+# entrypoint.sh dumps this container's environment to a file cronjob can
+# source (cron itself doesn't inherit it) before handing off to whatever
+# CMD this service actually runs — the Celery worker by default, or
+# `cron -f` in the parser-producer service.
+COPY entrypoint.sh /entrypoint.sh
+RUN chmod 0755 /entrypoint.sh
+ENTRYPOINT ["/entrypoint.sh"]
 
 # Stage 5: consume parsing_queue. -I/--include imports tasks.py (this
 # directory is /app, already on sys.path) so parsing.scrape_source actually

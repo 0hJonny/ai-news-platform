@@ -330,7 +330,7 @@ services:
   # =========================================================================
   # workers/parser, workers/annotation — background jobs (Diplom_Code).
   # profiles: [jobs] => do NOT start on plain `docker compose up`, only explicitly:
-  #   docker compose --profile jobs up parser
+  #   docker compose --profile jobs up parser parser-producer
   #   docker compose --profile jobs up annotation
   # =========================================================================
   parser:
@@ -344,6 +344,35 @@ services:
       # imported as `from shared.celery_app import app` — same
       # mount-a-sibling-dir-in pattern already used for backend/core's
       # login-rules contract elsewhere in this file.
+      - ../workers/shared:/app/shared:ro
+    environment:
+      GOLANG_API: "http://news:5000/api/v1"
+      API_USER_LOGIN: ${ADMIN_USERNAME}
+      API_USER_PASSWORD: ${ADMIN_PASSWORD}
+      CELERY_BROKER_URL: redis://redis:6379/0
+    depends_on:
+      news:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - platform-network
+
+  # Same image as `parser`, but overrides its default CMD (the Celery
+  # consumer) with `cron -f` so /etc/cron.d/cronjob actually runs — that's
+  # the producer side of the pipeline: periodically walks source listings
+  # and enqueues parsing.scrape_source for new links (see producer.py).
+  # Split into its own service rather than folded into `parser` itself to
+  # keep one process per container instead of running cron + celery worker
+  # together in one.
+  parser-producer:
+    profiles: ["jobs"]
+    build:
+      context: ../workers/parser
+    container_name: platform-parser-producer
+    command: ["cron", "-f"]
+    volumes:
+      - ../workers/parser:/app
       - ../workers/shared:/app/shared:ro
     environment:
       GOLANG_API: "http://news:5000/api/v1"

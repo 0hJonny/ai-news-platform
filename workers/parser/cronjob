@@ -1,2 +1,16 @@
-# Run the Python program every 12 hours
-0 */12 * * * python /app/main.py
+# Run producer.py every 12 hours — walks the configured source listing
+# pages, creates draft articles via the Go API, and enqueues
+# parsing.scrape_source (parsing_queue) for each genuinely new one. Only
+# takes effect in the parser-producer service (infra/docker-compose.yml),
+# which overrides this image's default CMD with `cron -f`; the plain
+# `parser` service still runs the Celery consumer (see Dockerfile CMD).
+#
+# ". /etc/cron_env.sh": cron jobs run with a bare environment, not the
+# container's — this sources the dump entrypoint.sh wrote at startup so
+# GOLANG_API/CELERY_BROKER_URL/API_USER_* are actually set.
+# ">> /proc/1/fd/1 2>&1": with `cron -f` as this container's PID 1, writing
+# straight to its own stdout/stderr is what makes output show up in
+# `docker compose logs` — cron jobs are silent by default otherwise.
+# "root": /etc/cron.d/* entries need an explicit user field (unlike a plain
+# `crontab -e` file) — omitting it is why this line never actually ran.
+0 */12 * * * root . /etc/cron_env.sh && python /app/producer.py >> /proc/1/fd/1 2>&1
