@@ -26,7 +26,7 @@ export class ApiArticlesRepository implements IArticlesRepository {
         parsedTags = JSON.parse(dto.tags)
       }
     } catch (e) {
-      console.error(`[ApiArticlesRepository] Ошибка парсинга тегов для статьи ${dto.id}:`, e)
+      console.error(`[ApiArticlesRepository] Failed to parse tags for article ${dto.id}:`, e)
       parsedTags = []
     }
 
@@ -124,11 +124,11 @@ export class ApiArticlesRepository implements IArticlesRepository {
     return this.getArticles(locale, { limit })
   }
 
-  async getAllCategories(locale: string): Promise<string[]> {
-    return []
+  async getAllCategories(): Promise<string[]> {
+    return [] // TODO: no dedicated endpoint yet
   }
 
-  async getAllTags(locale: string): Promise<string[]> {
-    return []
+  async getAllTags(): Promise<string[]> {
+    return [] // TODO: no dedicated endpoint yet
   }
 }

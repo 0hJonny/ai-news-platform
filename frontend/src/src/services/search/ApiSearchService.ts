@@ -92,11 +92,11 @@ export class ApiSearchService implements ISearchService {
     }
   }
 
-  async getPopularTags(locale: string): Promise<string[]> {
+  async getPopularTags(): Promise<string[]> {
     return [] // TODO: Implement backend endpoint
   }
 
-  async getSimilarArticles(articleId: string, locale: string, limit?: number): Promise<Article[]> {
+  async getSimilarArticles(): Promise<Article[]> {
     return [] // TODO: Implement backend endpoint
   }
 }

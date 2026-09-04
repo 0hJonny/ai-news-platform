@@ -169,8 +169,8 @@ const canAdvance = computed(() => {
 })
 
 const goBack = () => {
-  const idx = currentStepIndex.value
-  if (idx > 0) step.value = FORM_STEPS[idx - 1]
+  const prevStep = FORM_STEPS[currentStepIndex.value - 1]
+  if (prevStep) step.value = prevStep
 }
 
 // Purely client-side validation errors (never touch the backend), kept

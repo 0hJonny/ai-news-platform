@@ -3,7 +3,7 @@ import type { IArticlesRepository } from './IArticlesRepository'
 import { mockArticles } from '@/stores/article/mock/articles'
 
 export class MockArticlesRepository implements IArticlesRepository {
-  getArticlesCount(locale: string, filters?: ArticlesFilters): Promise<number> {
+  getArticlesCount(): Promise<number> {
     throw new Error('Method not implemented.')
   }
   private readonly mockDelay: number = 300
@@ -37,8 +37,13 @@ export class MockArticlesRepository implements IArticlesRepository {
     }
 
     if (filters?.tag) {
+      // Mirror ApiArticlesRepository.buildSearchQuery: `tag` can be a single
+      // value or a multi-select array, normalize to an array either way.
+      const requestedTags = (Array.isArray(filters.tag) ? filters.tag : [filters.tag]).map((tag) =>
+        tag.toLowerCase(),
+      )
       filtered = filtered.filter((article) =>
-        article.tags.some((tag) => tag.toLowerCase() === filters.tag!.toLowerCase()),
+        article.tags.some((tag) => requestedTags.includes(tag.toLowerCase())),
       )
     }
 

@@ -1,4 +1,4 @@
-import { computed, watch, onMounted, ref } from 'vue'
+import { computed, watch, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { storeToRefs } from 'pinia'
 import { useArticlesStore } from '@/stores/article/articles'
