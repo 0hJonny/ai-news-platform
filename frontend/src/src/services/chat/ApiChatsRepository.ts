@@ -15,6 +15,13 @@ import type { IChatsRepository } from './IChatsRepository'
 import { ENDPOINTS } from '@/api/endpoints'
 import { useAuthStore } from '@/stores/authStore/authStore'
 
+// Fallback messages for RepositoryError.message, used only in console logging
+// (never rendered to the user), kept in English for consistency.
+const FALLBACK_ERROR_MESSAGES = {
+  chats: 'Chats request failed',
+  feedback: 'Feedback submission failed',
+} as const
+
 function hasStringError(obj: unknown): obj is { error: string } {
   return (
     typeof obj === 'object' &&
@@ -199,7 +206,7 @@ export class ApiChatsRepository implements IChatsRepository {
     } catch (e: unknown) {
       const { code, details } = getErrorCode(e)
 
-      let errorMessage = 'Ошибка запроса к чатам'
+      let errorMessage: string = FALLBACK_ERROR_MESSAGES.chats
       if (hasStringError(details)) {
         errorMessage = details.error
       }
@@ -249,7 +256,7 @@ export class ApiChatsRepository implements IChatsRepository {
     } catch (e: unknown) {
       const { code, details } = getErrorCode(e)
 
-      let errorMessage = 'Ошибка отправки отзыва'
+      let errorMessage: string = FALLBACK_ERROR_MESSAGES.feedback
       if (hasStringError(details)) {
         errorMessage = details.error
       }

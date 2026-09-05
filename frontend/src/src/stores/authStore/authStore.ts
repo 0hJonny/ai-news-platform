@@ -194,7 +194,7 @@ export const useAuthStore = defineStore('auth', () => {
     if (result.success) {
       user.value = result.data
     } else {
-      console.error('[AuthStore] Не удалось загрузить профиль:', result.error.message)
+      console.error('[AuthStore] Failed to load profile:', result.error.message)
     }
   }
 

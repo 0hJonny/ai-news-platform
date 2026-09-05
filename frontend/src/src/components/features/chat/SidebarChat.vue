@@ -38,7 +38,7 @@ const initAuth = async () => {
   if (!authStore.isAuthenticated && !authStore.sessionExpired && !authStore.invalidSession) {
     const success = await authStore.anonymousLogin()
     if (!success) {
-      console.error('Не удалось авторизоваться, список чатов не будет загружен.')
+      console.error('Failed to authenticate; the chat list will not be loaded.')
       return
     }
   }

@@ -161,6 +161,19 @@
         "Popular web development frameworks",
         "Python vs Go in 2024"
       ]
+    },
+    "defaultTitle": "New chat",
+    "status": {
+      "initializing": "Initializing...",
+      "done": "Done!"
+    },
+    "errors": {
+      "NETWORK_ERROR": "Network error. Check your connection.",
+      "HTTP_ERROR": "The server returned an error. Please try again later.",
+      "NO_FINAL_ANSWER": "The response was not received in full.",
+      "ABORTED": "Generation stopped by the user.",
+      "UNKNOWN_ERROR": "An unknown error occurred.",
+      "FALLBACK": "Something went wrong."
     }
   },
   "theme": {

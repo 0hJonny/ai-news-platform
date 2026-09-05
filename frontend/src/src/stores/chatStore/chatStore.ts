@@ -1,7 +1,21 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { createChatsRepository } from '@/services/chat'
+import { i18n } from '@/plugins/i18n'
 import type { ChatEvent, FinalAnswer, RepositoryError } from '@/types/chat/chat'
+
+const { t } = i18n.global
+
+// Console-log messages only (never rendered to the user), kept in English for consistency.
+const LOG = {
+  sessionsLoadFailed: '[ChatStore] Failed to load sessions:',
+  sessionCreateFailed: '[ChatStore] Failed to create session:',
+  backgroundSendFailed: '[ChatStore] Background message send failed:',
+  feedbackRejected: '[ChatStore] Feedback rejected: expected a message_id from the backend.',
+  historyLoadFailed: '[ChatStore] Failed to load history:',
+  renameFailed: '[ChatStore] Failed to rename chat:',
+  deleteFailed: '[ChatStore] Failed to delete chat:',
+} as const
 
 // --- Local state interfaces ---
 
@@ -86,15 +100,15 @@ export const useChatStore = defineStore('chat', () => {
         updatedAt: s.updated_at,
       }))
     } else {
-      console.error('[ChatStore] Ошибка загрузки сессий:', result.error.message)
+      console.error(LOG.sessionsLoadFailed, result.error.message)
     }
   }
 
-  const createNewChat = async (initialTitle = 'Новый чат'): Promise<Chat | null> => {
+  const createNewChat = async (initialTitle = t('chat.defaultTitle')): Promise<Chat | null> => {
     const result = await repo.createSession({ title: initialTitle })
 
     if (!result.success) {
-      console.error('[ChatStore] Ошибка создания сессии:', result.error.message)
+      console.error(LOG.sessionCreateFailed, result.error.message)
       return null
     }
 
@@ -121,7 +135,7 @@ export const useChatStore = defineStore('chat', () => {
     if (!chat) return null
 
     sendMessage(chat.id, text).catch((err) => {
-      console.error('[ChatStore] Ошибка фоновой отправки сообщения:', err)
+      console.error(LOG.backgroundSendFailed, err)
     })
 
     // 3. Return the ID immediately so the router can instantly navigate the user to the chat page
@@ -156,7 +170,7 @@ export const useChatStore = defineStore('chat', () => {
       chat.updatedAt = new Date().toISOString()
 
       // Background rename if this was the default title
-      if (chat.title === 'Новый чат') {
+      if (chat.title === t('chat.defaultTitle')) {
         const newTitle = text.slice(0, 40)
         chat.title = newTitle
         repo.updateSessionTitle(chat.id, newTitle).catch(console.error)
@@ -168,7 +182,7 @@ export const useChatStore = defineStore('chat', () => {
 
   const generateAIResponse = async (chatId: string, promptText: string) => {
     isStreaming.value = true
-    streamProgress.value = 'Инициализация...'
+    streamProgress.value = t('chat.status.initializing')
 
     const localAiMessageId = crypto.randomUUID()
 
@@ -204,7 +218,7 @@ export const useChatStore = defineStore('chat', () => {
               currentMsg.backendMessageId = final.message_id
             }
 
-            streamProgress.value = 'Готово!'
+            streamProgress.value = t('chat.status.done')
           }
         },
         currentAbortController.value.signal,
@@ -258,7 +272,7 @@ export const useChatStore = defineStore('chat', () => {
     const msg = _getReactiveMessage(chatId, localMessageId)
 
     if (!msg?.backendMessageId) {
-      console.warn('[ChatStore] Фидбек отклонен: ожидается message_id от бэкенда.')
+      console.warn(LOG.feedbackRejected)
       return false
     }
 
@@ -311,14 +325,8 @@ export const useChatStore = defineStore('chat', () => {
   }
 
   const _getLocalizedError = (code: string): string => {
-    const errors: Record<string, string> = {
-      NETWORK_ERROR: 'Ошибка сети. Проверьте подключение.',
-      HTTP_ERROR: 'Сервер вернул ошибку. Попробуйте позже.',
-      NO_FINAL_ANSWER: 'Ответ не был получен полностью.',
-      ABORTED: 'Генерация остановлена пользователем.',
-      UNKNOWN_ERROR: 'Произошла неизвестная ошибка.',
-    }
-    return errors[code] || 'Что-то пошло не так.'
+    const knownCodes = ['NETWORK_ERROR', 'HTTP_ERROR', 'NO_FINAL_ANSWER', 'ABORTED', 'UNKNOWN_ERROR']
+    return knownCodes.includes(code) ? t(`chat.errors.${code}`) : t('chat.errors.FALLBACK')
   }
 
   const isLoadingHistory = ref(false)
@@ -353,7 +361,7 @@ export const useChatStore = defineStore('chat', () => {
         steps: [], // History usually doesn't store intermediate thoughts (steps), only the final text
       }))
     } else {
-      console.error('[ChatStore] Ошибка загрузки истории:', result.error.message)
+      console.error(LOG.historyLoadFailed, result.error.message)
     }
 
     isLoadingHistory.value = false
@@ -369,7 +377,7 @@ export const useChatStore = defineStore('chat', () => {
     const result = await repo.updateSessionTitle(chatId, newTitle.trim())
     if (!result.success) {
       chat.title = oldTitle // Roll back if the backend request failed
-      console.error('[ChatStore] Ошибка переименования:', result.error.message)
+      console.error(LOG.renameFailed, result.error.message)
     }
   }
 
@@ -387,7 +395,7 @@ export const useChatStore = defineStore('chat', () => {
       return true
     }
 
-    console.error('[ChatStore] Ошибка удаления:', result.error.message)
+    console.error(LOG.deleteFailed, result.error.message)
     return false
   }
 

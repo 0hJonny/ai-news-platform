@@ -29,7 +29,7 @@ const copyText = async () => {
       isCopied.value = false
     }, 2000)
   } catch (err) {
-    console.error('Ошибка копирования:', err)
+    console.error('Failed to copy text:', err)
   }
 }
 

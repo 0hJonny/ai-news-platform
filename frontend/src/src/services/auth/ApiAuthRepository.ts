@@ -43,10 +43,10 @@ function isVerificationRequiredResponse(data: unknown): data is VerificationRequ
 // each method quietly drifting from the others.
 const FALLBACK_ERROR_CODE = 'AUTH_HTTP_ERROR'
 const FALLBACK_ERROR_MESSAGES = {
-  auth: 'Ошибка аутентификации',
-  profile: 'Ошибка получения профиля',
-  loginAvailability: 'Не удалось проверить доступность логина',
-  checkUsername: 'Не удалось проверить доступность логина',
+  auth: 'Authentication failed',
+  profile: 'Failed to fetch profile',
+  loginAvailability: 'Failed to check login availability',
+  checkUsername: 'Failed to check login availability',
 } as const
 
 export class ApiAuthRepository implements IAuthRepository {
