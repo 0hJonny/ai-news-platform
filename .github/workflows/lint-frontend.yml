@@ -2,21 +2,32 @@
 # legacy, deliberately not linted/built here.
 name: Lint frontend
 
+# No `paths:` filter here — path-based skipping now happens inside the
+# `gate` job below instead, so it can also catch "frontend failed on the
+# last completed run" and re-check even when frontend/src didn't change
+# this time. See _gate-single.yml.
 on:
   push:
-    paths:
-      - "frontend/src/**"
-      - ".github/workflows/lint-frontend.yml"
   pull_request:
-    paths:
-      - "frontend/src/**"
-      - ".github/workflows/lint-frontend.yml"
 
 permissions:
   contents: read
+  actions: read
 
 jobs:
+  gate:
+    uses: ./.github/workflows/_gate-single.yml
+    with:
+      workflow_file: lint-frontend.yml
+      job_name: frontend
+      paths: |
+        frontend/src/**
+        .github/workflows/lint-frontend.yml
+        .github/workflows/_gate-single.yml
+
   frontend:
+    needs: gate
+    if: needs.gate.outputs.run == 'true'
     runs-on: ubuntu-latest
     defaults:
       run:

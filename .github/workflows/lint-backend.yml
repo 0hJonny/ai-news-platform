@@ -5,26 +5,43 @@
 # own .golangci.yml.
 name: Lint Go backend
 
+# No `paths:` filter here — path-based skipping now happens inside the
+# `gate` job below instead, so it can also catch "go (core)"/"go (news)"
+# having failed on the last completed run and re-check that module even
+# when backend/<module> didn't change this time. See _gate-matrix.yml.
 on:
   push:
-    paths:
-      - "backend/**"
-      - ".github/workflows/lint-backend.yml"
   pull_request:
-    paths:
-      - "backend/**"
-      - ".github/workflows/lint-backend.yml"
 
 permissions:
   contents: read
+  actions: read
 
 jobs:
+  gate:
+    uses: ./.github/workflows/_gate-matrix.yml
+    with:
+      workflow_file: lint-backend.yml
+      job_name_prefix: go
+      items: '["core","news"]'
+      filters: |
+        core:
+          - 'backend/core/**'
+          - '.github/workflows/lint-backend.yml'
+          - '.github/workflows/_gate-matrix.yml'
+        news:
+          - 'backend/news/**'
+          - '.github/workflows/lint-backend.yml'
+          - '.github/workflows/_gate-matrix.yml'
+
   go:
+    needs: gate
+    if: needs.gate.outputs.items != '[]'
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        module: [core, news]
+        module: ${{ fromJson(needs.gate.outputs.items) }}
     defaults:
       run:
         working-directory: backend/${{ matrix.module }}

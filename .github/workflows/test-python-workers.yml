@@ -1,30 +1,45 @@
 # Runs each worker's own pytest suite, if it has one — a stronger check
-# than lint-python-workers.yml, which only catches style issues. Matrix
-# mirrors that workflow's per-worker independent Docker build contexts
-# (own requirements.txt/requirements-dev.txt); only list a worker here
-# once it actually has tests.
+# than lint-python-workers.yml, which only catches style issues.
+#
+# `gate` below is the same reusable _gate-matrix.yml every other matrixed
+# CI workflow in this repo uses (lint-backend.yml, lint-python-workers.yml)
+# — see that file's docstring for how it decides which workers actually
+# need pytest this run (own path changed, or failed last completed run).
+#
+# Add a worker's name to `items`/`filters` below once it has its own
+# tests — nothing else in this file needs to change.
 name: Test Python workers
 
+# No `paths:` filter here — see _gate-matrix.yml's docstring for why.
 on:
   push:
-    paths:
-      - "workers/annotation/**"
-      - ".github/workflows/test-python-workers.yml"
   pull_request:
-    paths:
-      - "workers/annotation/**"
-      - ".github/workflows/test-python-workers.yml"
 
 permissions:
   contents: read
+  actions: read
 
 jobs:
+  gate:
+    uses: ./.github/workflows/_gate-matrix.yml
+    with:
+      workflow_file: test-python-workers.yml
+      job_name_prefix: pytest
+      items: '["annotation"]'
+      filters: |
+        annotation:
+          - 'workers/annotation/**'
+          - '.github/workflows/test-python-workers.yml'
+          - '.github/workflows/_gate-matrix.yml'
+
   pytest:
+    needs: gate
+    if: needs.gate.outputs.items != '[]'
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        worker: [annotation]
+        worker: ${{ fromJson(needs.gate.outputs.items) }}
     steps:
       - uses: actions/checkout@v7
 

@@ -1,0 +1,103 @@
+# Reusable gate for a matrixed CI job (module/worker/... per item). A
+# caller workflow's `gate` job `uses:` this and feeds its own actual job
+# a dynamically-built matrix from the `items` output — see
+# test-python-workers.yml or lint-backend.yml for the calling shape.
+#
+# An item goes into the output if EITHER something under its own path
+# changed, OR its "<job_name_prefix> (<item>)" job (GitHub's own matrix
+# job naming) failed in the last completed run of the calling workflow.
+# That second condition is the point: without it, a red matrix leg only
+# gets rechecked once someone happens to touch that item's own path
+# again — a failure caused by something elsewhere in the repo (or a
+# flaky run) could otherwise stay red indefinitely with no further
+# signal. This is why every caller's trigger has no `paths:` filter of
+# its own: a path filter at the trigger level would stop the whole
+# workflow from running before this gate ever gets a chance to check.
+name: CI gate (matrix, reusable)
+
+on:
+  workflow_call:
+    inputs:
+      workflow_file:
+        description: Filename of the calling workflow, e.g. lint-backend.yml
+        required: true
+        type: string
+      job_name_prefix:
+        description: >
+          The calling workflow's actual job id, e.g. "go" for a job that
+          shows up as "go (core)" / "go (news)" in a module matrix.
+        required: true
+        type: string
+      items:
+        description: JSON array of every matrix value the caller could run, e.g. '["core","news"]'.
+        required: true
+        type: string
+      filters:
+        description: >
+          dorny/paths-filter `filters` input text — one entry per value
+          in `items`, named to match.
+        required: true
+        type: string
+    outputs:
+      items:
+        description: JSON array — the subset of `items` that need to run this time.
+        value: ${{ jobs.gate.outputs.items }}
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  gate:
+    runs-on: ubuntu-latest
+    outputs:
+      items: ${{ steps.union.outputs.items }}
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: dorny/paths-filter@v3
+        id: changes
+        with:
+          # token lets this compare via the GitHub API instead of local
+          # git history, so it works regardless of checkout depth.
+          token: ${{ github.token }}
+          filters: ${{ inputs.filters }}
+          # `changes` output (used below) is a JSON array of whichever
+          # filter names — i.e. item names — actually matched.
+
+      - name: Find which items' job failed the last completed run
+        id: last_run
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          branch="${{ github.head_ref || github.ref_name }}"
+          run_id=$(gh api \
+            "repos/${{ github.repository }}/actions/workflows/${{ inputs.workflow_file }}/runs?branch=${branch}&status=completed&per_page=1" \
+            --jq '.workflow_runs[0].id // empty')
+
+          jobs_json='{"jobs":[]}'
+          if [[ -n "$run_id" ]]; then
+            jobs_json=$(gh api "repos/${{ github.repository }}/actions/runs/${run_id}/jobs" --paginate)
+          fi
+
+          failed=()
+          for item in $(jq -r '.[]' <<< '${{ inputs.items }}'); do
+            name="${{ inputs.job_name_prefix }} (${item})"
+            conclusion=$(jq -r --arg name "$name" \
+              '[.jobs[]? | select(.name == $name) | .conclusion][0] // "none"' <<< "$jobs_json")
+            echo "  ${name}: last conclusion = ${conclusion}"
+            [[ "$conclusion" == "failure" ]] && failed+=("\"${item}\"")
+          done
+
+          failed_json="[$(IFS=,; echo "${failed[*]:-}")]"
+          echo "failed=${failed_json}" >> "$GITHUB_OUTPUT"
+
+      - name: Union changed + previously-failed items
+        id: union
+        run: |
+          items=$(jq -cn \
+            --argjson a '${{ steps.changes.outputs.changes }}' \
+            --argjson b '${{ steps.last_run.outputs.failed }}' \
+            '($a + $b) | unique')
+          echo "Items to run this time: ${items}"
+          echo "items=${items}" >> "$GITHUB_OUTPUT"

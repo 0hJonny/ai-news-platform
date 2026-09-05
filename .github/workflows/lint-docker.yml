@@ -13,28 +13,37 @@
 # once those are cleaned up.
 name: Lint Dockerfiles
 
+# No `paths:` filter here — path-based skipping now happens inside the
+# `gate` job below instead, so it can also catch "hadolint failed on the
+# last completed run" and re-check even when no Dockerfile changed this
+# time. See _gate-single.yml.
 on:
   push:
-    paths:
-      - "**/Dockerfile"
-      - "**/Dockerfile.*"
-      - "**/dockerfile*"
-      - ".github/workflows/lint-docker.yml"
   pull_request:
-    paths:
-      - "**/Dockerfile"
-      - "**/Dockerfile.*"
-      - "**/dockerfile*"
-      - ".github/workflows/lint-docker.yml"
 
 permissions:
   contents: read
+  actions: read
 
 env:
   HADOLINT_VERSION: "2.15.1"
 
 jobs:
+  gate:
+    uses: ./.github/workflows/_gate-single.yml
+    with:
+      workflow_file: lint-docker.yml
+      job_name: hadolint
+      paths: |
+        **/Dockerfile
+        **/Dockerfile.*
+        **/dockerfile*
+        .github/workflows/lint-docker.yml
+        .github/workflows/_gate-single.yml
+
   hadolint:
+    needs: gate
+    if: needs.gate.outputs.run == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7

@@ -8,30 +8,47 @@
 # per-file-ignores, known-first-party) — see workers/{parser,annotation,agent}/pyproject.toml.
 name: Lint Python workers
 
+# No `paths:` filter here — path-based skipping now happens inside the
+# `gate` job below instead, so it can also catch "ruff (<worker>)" having
+# failed on the last completed run and re-check that worker even when
+# workers/<worker> didn't change this time. See _gate-matrix.yml.
 on:
   push:
-    paths:
-      - "workers/parser/**"
-      - "workers/annotation/**"
-      - "workers/agent/**"
-      - ".github/workflows/lint-python-workers.yml"
   pull_request:
-    paths:
-      - "workers/parser/**"
-      - "workers/annotation/**"
-      - "workers/agent/**"
-      - ".github/workflows/lint-python-workers.yml"
 
 permissions:
   contents: read
+  actions: read
 
 jobs:
+  gate:
+    uses: ./.github/workflows/_gate-matrix.yml
+    with:
+      workflow_file: lint-python-workers.yml
+      job_name_prefix: ruff
+      items: '["parser","annotation","agent"]'
+      filters: |
+        parser:
+          - 'workers/parser/**'
+          - '.github/workflows/lint-python-workers.yml'
+          - '.github/workflows/_gate-matrix.yml'
+        annotation:
+          - 'workers/annotation/**'
+          - '.github/workflows/lint-python-workers.yml'
+          - '.github/workflows/_gate-matrix.yml'
+        agent:
+          - 'workers/agent/**'
+          - '.github/workflows/lint-python-workers.yml'
+          - '.github/workflows/_gate-matrix.yml'
+
   ruff:
+    needs: gate
+    if: needs.gate.outputs.items != '[]'
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        worker: [parser, annotation, agent]
+        worker: ${{ fromJson(needs.gate.outputs.items) }}
     steps:
       - uses: actions/checkout@v7
 

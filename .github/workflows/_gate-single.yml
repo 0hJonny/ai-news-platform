@@ -1,0 +1,84 @@
+# Reusable gate for a CI workflow with one plain (non-matrix) job — same
+# idea as _gate-matrix.yml, just without the per-item split. See that
+# file's docstring for why the caller's trigger must have no `paths:`
+# filter of its own.
+name: CI gate (single job, reusable)
+
+on:
+  workflow_call:
+    inputs:
+      workflow_file:
+        description: Filename of the calling workflow, e.g. lint-docker.yml
+        required: true
+        type: string
+      job_name:
+        description: The calling workflow's actual job id, e.g. "hadolint".
+        required: true
+        type: string
+      paths:
+        description: Newline-separated path globs that should trigger this job.
+        required: true
+        type: string
+    outputs:
+      run:
+        description: "'true' if the job needs to run this time, else 'false'."
+        value: ${{ jobs.gate.outputs.run }}
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  gate:
+    runs-on: ubuntu-latest
+    outputs:
+      run: ${{ steps.decide.outputs.run }}
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Build the single path filter from `paths`
+        id: build_filter
+        run: |
+          {
+            echo "filters<<FILTERS_EOF"
+            echo "target:"
+            while IFS= read -r pattern; do
+              [[ -z "$pattern" ]] && continue
+              echo "  - '${pattern}'"
+            done <<< "${{ inputs.paths }}"
+            echo "FILTERS_EOF"
+          } >> "$GITHUB_OUTPUT"
+
+      - uses: dorny/paths-filter@v3
+        id: changes
+        with:
+          token: ${{ github.token }}
+          filters: ${{ steps.build_filter.outputs.filters }}
+
+      - name: Did this job fail the last completed run of this workflow?
+        id: last_run
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          branch="${{ github.head_ref || github.ref_name }}"
+          run_id=$(gh api \
+            "repos/${{ github.repository }}/actions/workflows/${{ inputs.workflow_file }}/runs?branch=${branch}&status=completed&per_page=1" \
+            --jq '.workflow_runs[0].id // empty')
+
+          conclusion="none"
+          if [[ -n "$run_id" ]]; then
+            conclusion=$(gh api "repos/${{ github.repository }}/actions/runs/${run_id}/jobs" --paginate \
+              --jq --arg name "${{ inputs.job_name }}" \
+              '[.jobs[]? | select(.name == $name) | .conclusion][0] // "none"')
+          fi
+          echo "Last completed run's '${{ inputs.job_name }}' conclusion: ${conclusion}"
+          echo "conclusion=${conclusion}" >> "$GITHUB_OUTPUT"
+
+      - name: Decide whether the job needs to run
+        id: decide
+        run: |
+          if [[ "${{ steps.changes.outputs.target }}" == "true" || "${{ steps.last_run.outputs.conclusion }}" == "failure" ]]; then
+            echo "run=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "run=false" >> "$GITHUB_OUTPUT"
+          fi
