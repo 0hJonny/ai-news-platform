@@ -1,44 +1,29 @@
 """CyberNewsSource — the Source for cybernews.com (config.py's SOURCES
 entry with name="CyberNews"). Everything specific to this site — how its
 listing pages paginate (/page/{n}), which selectors hold article links,
-which selectors/JSON-LD hold article content — lives entirely in this one
-class. producer.py/tasks.py never see any of it; they only call
-discover()/fetch_article().
+which selectors hold article content — lives entirely in this one class.
+producer.py/tasks.py never see any of it; they only call
+discover()/fetch_article(). Fetching itself is delegated to an injected
+HttpClient (see http_client.py) rather than built here, so this class
+doesn't need to know cybernews.com happens to sit behind Cloudflare.
 """
 
 import itertools
-import json
 import logging
-import random
 
-import cloudscraper
 from bs4 import BeautifulSoup
 
-from .base import DiscoveredArticle
+from .base import DiscoveredArticle, JsonLdMixin
+from .http_client import HttpClient
 
 logger = logging.getLogger(__name__)
 
 REQUEST_TIMEOUT = 15
-_PLATFORMS = ["linux", "windows", "darwin", "android"]
-_BROWSERS = ["chrome", "firefox"]
 
 
-class CyberNewsSource:
-    def __init__(self):
-        # A plain requests.get() 403s on cybernews.com (Cloudflare
-        # bot-check). One scraper per Source instance — get_parser() hands
-        # out a fresh instance per call, so this never gets shared across
-        # concurrent Celery tasks; the Cloudflare-challenge solve has real
-        # per-instance setup cost, no need to redo it per request either.
-        self._scraper = cloudscraper.create_scraper(
-            delay=6,
-            browser={"browser": random.choice(_BROWSERS), "platform": random.choice(_PLATFORMS)},
-        )
-
-    def _fetch_html(self, url: str) -> str:
-        response = self._scraper.get(url, timeout=REQUEST_TIMEOUT)
-        response.raise_for_status()
-        return response.text
+class CyberNewsSource(JsonLdMixin):
+    def __init__(self, http_client: HttpClient):
+        self._http = http_client
 
     def discover(self, listing_url: str, language_code: str):
         """Walks /page/{n} pagination — cybernews-specific, nothing outside
@@ -49,7 +34,7 @@ class CyberNewsSource:
         for page_number in itertools.count(1):
             url = f"{listing_url}/page/{page_number}" if page_number > 1 else listing_url
             try:
-                html = self._fetch_html(url)
+                html = self._http.get(url, timeout=REQUEST_TIMEOUT)
             except Exception as exc:
                 logger.error("[CyberNewsSource] Failed to fetch listing %s: %s", url, exc)
                 return
@@ -66,7 +51,7 @@ class CyberNewsSource:
         # Deliberately doesn't catch: tasks.py's scrape_source needs the
         # real exception to log a useful PARSING-stage failure reason
         # instead of a generic placeholder.
-        html = self._fetch_html(url)
+        html = self._http.get(url, timeout=REQUEST_TIMEOUT)
         return self._parse_article(html)
 
     def _extract_article_links(self, html: str) -> list[str]:
@@ -95,7 +80,7 @@ class CyberNewsSource:
         return links
 
     def _parse_article(self, html: str) -> dict:
-        """(title, author) prefer JSON-LD (see _parse_json_ld) and fall back
+        """(title, author) prefer JSON-LD (see JsonLdMixin) and fall back
         to CSS-based heuristics only where that came up empty. Body text
         always comes from the CSS side: JSON-LD's NewsArticle node here
         doesn't carry articleBody, only metadata.
@@ -125,56 +110,3 @@ class CyberNewsSource:
         body = "\n\n".join(p.get_text(strip=True) for p in paragraphs if p.get_text(strip=True))
 
         return {"title": title, "author": author, "body": body}
-
-    @staticmethod
-    def _parse_json_ld(soup: BeautifulSoup) -> tuple[str | None, str | None]:
-        """Best-effort (title, author) from schema.org JSON-LD (Article/
-        NewsArticle/BlogPosting), which most modern news sites embed for SEO.
-        Far less fragile than scraping CSS classes — cybernews.com's own
-        article-info__link/article-info__date/heading classes have already
-        drifted out from under a redesign once, while its JSON-LD block
-        hasn't. Returns (None, None) on any failure/absence so the caller
-        falls back to the CSS-based heuristics above.
-        """
-        for script in soup.find_all("script", type="application/ld+json"):
-            try:
-                data = json.loads(script.string or "")
-            except (json.JSONDecodeError, TypeError):
-                continue
-
-            # Sites either wrap everything in a single {"@graph": [...]} node
-            # (cybernews.com's pattern) or emit a plain list/object directly.
-            if isinstance(data, dict):
-                nodes = data.get("@graph", [data])
-            else:
-                nodes = data
-            if not isinstance(nodes, list):
-                continue
-
-            nodes_by_id = {n["@id"]: n for n in nodes if isinstance(n, dict) and n.get("@id")}
-
-            for node in nodes:
-                if not isinstance(node, dict):
-                    continue
-                node_type = node.get("@type")
-                types = node_type if isinstance(node_type, list) else [node_type]
-                if not any(t in ("Article", "NewsArticle", "BlogPosting") for t in types):
-                    continue
-
-                title = node.get("headline")
-
-                author_ref = node.get("author")
-                author = None
-                if isinstance(author_ref, dict):
-                    author = author_ref.get("name")
-                    if author is None and "@id" in author_ref:
-                        author_node = nodes_by_id.get(author_ref["@id"])
-                        if author_node:
-                            author = author_node.get("name")
-                elif isinstance(author_ref, str):
-                    author = author_ref
-
-                if title or author:
-                    return title, author
-
-        return None, None
