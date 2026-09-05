@@ -15,4 +15,4 @@ select = ["E", "F", "I", "UP", "B"]
 # container runtime via docker-compose's bind mount — see
 # infra/docker-compose.yml and workers/parser/pyproject.toml for the same
 # situation.
-known-first-party = ["models", "services", "shared"]
+known-first-party = ["models", "repository", "shared"]

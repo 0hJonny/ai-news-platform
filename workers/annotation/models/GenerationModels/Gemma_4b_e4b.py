@@ -1,14 +1,14 @@
 import re
 
 from models import ArticleAnnotation
+from repository import GenerationResponse, ModelRepository, model_repository
 
 from .GenerationModel import GenerationModel
-from .GenerationResponse import GenerationResponse
 
 
 class Gemma_4b_e4b(GenerationModel):
-    def __init__(self):
-        super().__init__()
+    def __init__(self, repository: ModelRepository = model_repository):
+        super().__init__(repository)
         self.model_name = "gemma4:e4b"
         self.data = {
             "stream": False,

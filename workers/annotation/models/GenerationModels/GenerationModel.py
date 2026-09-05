@@ -1,14 +1,11 @@
-import requests
-
 from models import ArticleAnnotation
-
-from .GenerationResponse import GenerationResponse
+from repository import GenerationResponse, ModelRepository, model_repository
 
 
 class GenerationModel:
-    def __init__(self):
+    def __init__(self, repository: ModelRepository = model_repository):
         self.model_name = "GenerationModel"
-        self.api_url = ""
+        self.repository = repository
         self.data = {
             "stream": False,  # Placeholder for stream option
             "options": {
@@ -16,10 +13,6 @@ class GenerationModel:
                 "repeat_penalty": 1.0,  # Placeholder for repeat_penalty option
             },
         }
-
-    def set_api_url(self, api_url: str):
-        if self.api_url != api_url:
-            self.api_url = api_url
 
     def __str__(self):
         return self.model_name
@@ -50,19 +43,9 @@ class GenerationModel:
         if options is None:
             options = self.data["options"]
 
-        data = {
-            "model": self.model_name,
-            "messages": [{"role": "user", "content": prompt}],
-            "stream": stream,
-            "options": options,
-        }
-        try:
-            response = requests.post(f"{self.api_url}/api/chat", json=data)
-            if response.status_code == 200:
-                return GenerationResponse.from_json(response.json())
-            else:
-                print(f"Error: {response.status_code}")
-                return None
-        except requests.exceptions.RequestException as e:
-            print(f"Request error: {e}")
-            return None
+        return self.repository.generate(
+            model_name=self.model_name,
+            prompt=prompt,
+            stream=stream,
+            options=options,
+        )

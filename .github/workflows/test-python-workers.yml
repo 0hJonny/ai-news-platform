@@ -1,0 +1,41 @@
+# Runs each worker's own pytest suite, if it has one — a stronger check
+# than lint-python-workers.yml, which only catches style issues. Matrix
+# mirrors that workflow's per-worker independent Docker build contexts
+# (own requirements.txt/requirements-dev.txt); only list a worker here
+# once it actually has tests.
+name: Test Python workers
+
+on:
+  push:
+    paths:
+      - "workers/annotation/**"
+      - ".github/workflows/test-python-workers.yml"
+  pull_request:
+    paths:
+      - "workers/annotation/**"
+      - ".github/workflows/test-python-workers.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  pytest:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        worker: [annotation]
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        working-directory: workers/${{ matrix.worker }}
+        run: pip install -r requirements.txt -r requirements-dev.txt
+
+      - name: pytest
+        working-directory: workers/${{ matrix.worker }}
+        run: pytest

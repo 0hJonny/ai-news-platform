@@ -5,14 +5,14 @@
 import re
 
 from models import ArticleAnnotation
+from repository import GenerationResponse, ModelRepository, model_repository
 
 from .GenerationModel import GenerationModel
-from .GenerationResponse import GenerationResponse
 
 
 class Mistral(GenerationModel):
-    def __init__(self):
-        super().__init__()
+    def __init__(self, repository: ModelRepository = model_repository):
+        super().__init__(repository)
         self.model_name = "mistral"
         self.data = {
             "stream": False,  # Placeholder for stream option
@@ -175,7 +175,7 @@ class Mistral(GenerationModel):
         prompt = prompt % (article.title, article.body)
 
         answer: GenerationResponse = self._generate_text(prompt=prompt, stream=stream, options=options)
-        print(answer.strip())
+        print(answer.message["content"].strip())
 
         # Remove the square brackets from the string
         tags = answer.message["content"].strip("[]")
