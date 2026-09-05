@@ -67,7 +67,9 @@ def scrape_source(article_id: str, url: str, source_name: str):
     if not parsed["body"]:
         logger.error("[parsing.scrape_source] Empty body for %s, marking ERROR", url)
         article_repository.patch_article(article_id, parsing_status=PARSING_ERROR)
-        article_repository.log_stage(article_id, STAGE_PARSING, EVENT_FAILED, "Parsed page yielded an empty body")
+        article_repository.log_stage(
+            article_id, STAGE_PARSING, EVENT_FAILED, "Parsed page yielded an empty body"
+        )
         return
 
     ok, patch_error = article_repository.patch_article(
@@ -80,7 +82,10 @@ def scrape_source(article_id: str, url: str, source_name: str):
     if not ok:
         article_repository.patch_article(article_id, parsing_status=PARSING_ERROR)
         article_repository.log_stage(
-            article_id, STAGE_PARSING, EVENT_FAILED, patch_error or "Failed to PATCH parsed content back to the Go API"
+            article_id,
+            STAGE_PARSING,
+            EVENT_FAILED,
+            patch_error or "Failed to PATCH parsed content back to the Go API",
         )
         return
 
