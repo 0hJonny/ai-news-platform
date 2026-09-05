@@ -67,9 +67,9 @@ jobs:
 
           conclusion="none"
           if [[ -n "$run_id" ]]; then
-            conclusion=$(gh api "repos/${{ github.repository }}/actions/runs/${run_id}/jobs" --paginate \
-              --jq --arg name "${{ inputs.job_name }}" \
-              '[.jobs[]? | select(.name == $name) | .conclusion][0] // "none"')
+            jobs_json=$(gh api "repos/${{ github.repository }}/actions/runs/${run_id}/jobs" --paginate)
+            conclusion=$(jq -r --arg name "${{ inputs.job_name }}" \
+              '[.jobs[]? | select(.name == $name) | .conclusion][0] // "none"' <<< "$jobs_json")
           fi
           echo "Last completed run's '${{ inputs.job_name }}' conclusion: ${conclusion}"
           echo "conclusion=${conclusion}" >> "$GITHUB_OUTPUT"
